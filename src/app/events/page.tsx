@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import React from "react";
-import TiltedPhotoGrid from "@/src/components/common/TiltedPhotoGrid";
-import Eventcard from "@/src/components/common/Eventcard";
+import TiltedPhotoGrid from "@/components/common/TiltedPhotoGrid";
+import Eventcard from "@/components/common/Eventcard";
 
 
 

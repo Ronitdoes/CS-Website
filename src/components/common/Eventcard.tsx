@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { eventsData, type EventItem } from "@/src/data/eventsData";
+import { eventsData, type EventItem } from "@/data/eventsData";
 
 function TornEdge() {
   return (

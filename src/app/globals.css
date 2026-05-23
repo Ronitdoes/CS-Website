@@ -244,3 +244,15 @@ img {
   }
 
 }
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  display: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+}
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import dynamic from "next/dynamic";
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
-const Logo3D = dynamic(() => import("@/src/components/common/Logo3D"), {
+const Logo3D = dynamic(() => import("@/components/common/Logo3D"), {
   ssr: false,
 });
 export default function LogoScrollWrapper() {

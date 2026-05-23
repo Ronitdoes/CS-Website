@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useLoading } from "@/src/context/LoadingContext";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function Preloader() {
   const { isReady, setVideoFinished } = useLoading();

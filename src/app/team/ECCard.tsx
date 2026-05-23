@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { TeamMember } from '@/src/data/teamData';
+import { TeamMember } from '@/data/teamData';
 
 const LinkedInIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

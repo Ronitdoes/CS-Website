@@ -3,11 +3,11 @@
 import { useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import LineBackground from '@/components/LineBackground';
-import ScrollGrid from '@/src/components/common/ScrollGrid';
-import HorizontalGallery from '@/src/app/gallery/HorizontalGallery';
-import SmoothScrollProvider from '@/src/app/team/SmoothScrollProvider';
-import ZoomGallery from '@/src/app/gallery/ZoomGallery';
-const Gallery3D = dynamic(() => import('@/src/components/common/Gallery3D'), { ssr: false });
+import ScrollGrid from '@/components/common/ScrollGrid';
+import HorizontalGallery from '@/app/gallery/HorizontalGallery';
+import SmoothScrollProvider from '@/app/team/SmoothScrollProvider';
+import ZoomGallery from '@/app/gallery/ZoomGallery';
+const Gallery3D = dynamic(() => import('@/components/common/Gallery3D'), { ssr: false });
 
 export default function Gallery() {
   const videoRef = useRef<HTMLVideoElement | null>(null);

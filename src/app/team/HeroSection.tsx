@@ -5,8 +5,8 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import AnimatedText from './AnimatedText'
-import ECCard from '@/src/app/team/ECCard'
-import { EC_MEMBERS } from '@/src/data/teamData'
+import ECCard from '@/app/team/ECCard'
+import { EC_MEMBERS } from '@/data/teamData'
 
 gsap.registerPlugin(ScrollTrigger)
 

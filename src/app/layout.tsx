@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/src/components/common/Navbar";
-import Footer from "@/src/components/ui/Footer";
+import Navbar from "@/components/common/Navbar";
+import Footer from "@/components/ui/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   description: "ieee cs muj website",
 };
 
-import Preloader from "@/src/components/common/Preloader";
-import { LoadingProvider } from "@/src/context/LoadingContext";
+import Preloader from "@/components/common/Preloader";
+import { LoadingProvider } from "@/context/LoadingContext";
 
 export default function RootLayout({
   children,

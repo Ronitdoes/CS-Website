@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-import { TeamMember } from "@/src/data/teamData";
+import { TeamMember } from "@/data/teamData";
 
 /* ── LinkedIn SVG ─────────────────────────── */
 const LinkedInIcon = () => (

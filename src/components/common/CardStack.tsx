@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import styles from "@/src/components/common/CardStack.module.css";
+import styles from "@/components/common/CardStack.module.css";
 
 const images = [
   "/images/events/1.png",

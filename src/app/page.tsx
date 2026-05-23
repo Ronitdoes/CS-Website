@@ -1,18 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-const TeamsInfoComponent = dynamic(() => import("@/src/components/common/TeamsInfoComponent"), { ssr: false });
+const TeamsInfoComponent = dynamic(() => import("@/components/common/TeamsInfoComponent"), { ssr: false });
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import FAQ from "@/components/FAQ";
-const TeamCard = dynamic(() => import("@/src/app/team/TeamCard"), { ssr: false });
-const HorizontalGallery = dynamic(() => import("@/src/app/gallery/HorizontalGallery"), { ssr: false });
-const CardStack = dynamic(() => import("@/src/components/common/CardStack"), { ssr: false });
-const ProjectCard = dynamic(() => import("@/src/components/common/ProjectCard"), { ssr: false });
-const LandingText = dynamic(() => import("@/src/components/common/LandingText"), { ssr: false });
-const HeroImageSequence = dynamic(() => import("@/src/components/common/HeroImageSequence"), { ssr: false });
-import SmoothScrollProvider from "@/src/components/common/SmoothScrollProvider";
-const NewComponent = dynamic(() => import("@/src/components/common/newComponent"),{ ssr: false });
+const TeamCard = dynamic(() => import("@/app/team/TeamCard"), { ssr: false });
+const HorizontalGallery = dynamic(() => import("@/app/gallery/HorizontalGallery"), { ssr: false });
+const CardStack = dynamic(() => import("@/components/common/CardStack"), { ssr: false });
+const ProjectCard = dynamic(() => import("@/components/common/ProjectCard"), { ssr: false });
+const LandingText = dynamic(() => import("@/components/common/LandingText"), { ssr: false });
+const HeroImageSequence = dynamic(() => import("@/components/common/HeroImageSequence"), { ssr: false });
+import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
+const NewComponent = dynamic(() => import("@/components/common/newComponent"),{ ssr: false });
 import LineBackground from "@/components/LineBackground";
 import Newsletter from "@/components/Newsletter";
 import ScrollVelocity from "@/components/ScrollVelocity";

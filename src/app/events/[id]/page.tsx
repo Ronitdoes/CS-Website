@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { eventsData } from "@/src/data/eventsData";
+import { eventsData } from "@/data/eventsData";
 
 interface EventPageProps {
   params: Promise<{
