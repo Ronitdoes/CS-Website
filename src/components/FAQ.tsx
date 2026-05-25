@@ -176,8 +176,11 @@ export default function FAQ() {
         .faq-left {
           flex-shrink: 0;
           width: 220px;
-          position: sticky;
-          top: 112px;
+          /* Removed position: sticky — it triggers a main-thread layout
+             recalculation on every scroll frame, causing visible jitter.
+             The heading is small enough that pinning adds little UX value
+             compared to the performance cost. */
+          position: relative;
         }
 
         .faq-heading {

@@ -248,7 +248,7 @@ export default function TeamsInfoComponent() {
         <h1 className="text-[#f9a71f] text-4xl md:text-5xl lg:text-6xl text-center lg:text-left lg:-translate-y-10">Since 2019</h1>
         <img
           className="h-[30vh] md:h-[40vh] lg:h-[50vh] object-contain"
-          src="/images/events/2.png"
+          src="/images/events/2.avif"
           alt="img"
         />
       </div>

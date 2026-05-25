@@ -60,7 +60,7 @@ const Skiper19 = () => {
       </div>
 
       <ScrollControlled direction="left" className="rounded-4xl font-jakarta-sans w-[50vw] -translate-x-[15vw] translate-y-[100vh] ">
-        <img src="/logos/ieee-cs-logo.png" alt="IEEE Logo" />
+        <img src="/logos/ieee-cs-logo.avif" alt="IEEE Logo" />
       </ScrollControlled>
 
       <ScrollControlled direction="right" className="rounded-4xl font-jakarta-sans w-[50vw] translate-x-[15vw] translate-y-[118vh] ">

@@ -152,13 +152,20 @@ export default function TopographicBackground({
       }
     };
 
-    const animate = () => {
-      timeRef.current += animated ? 0.04 : 0; // Restored original step speed of 0.04
-      drawContours(timeRef.current);
+    // Throttle to ~20fps (50ms interval) — this subtle background animation
+    // doesn't need 60fps but was stealing frame budget from scroll animations.
+    let lastDrawTime = 0;
+    const FRAME_INTERVAL = 50; // ms, ~20fps
+
+    const animate = (now: number) => {
       animFrameRef.current = requestAnimationFrame(animate);
+      if (now - lastDrawTime < FRAME_INTERVAL) return;
+      lastDrawTime = now;
+      timeRef.current += animated ? 0.04 : 0;
+      drawContours(timeRef.current);
     };
 
-    animate();
+    animFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resize);

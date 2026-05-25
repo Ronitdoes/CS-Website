@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState, Suspense, useLayoutEffect } from "react";
+import React, { useRef, useEffect, useState, Suspense, useLayoutEffect, useCallback } from "react";
 import { useScroll, useTransform, motion, useMotionValueEvent } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment, Float } from "@react-three/drei";
@@ -49,6 +49,10 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
   
+  // Cache dimensions in a ref to avoid reading window.innerWidth/innerHeight on every scroll frame
+  // (reading those properties forces a layout/reflow)
+  const dimensionsRef = useRef({ width: 0, height: 0, dpr: 1 });
+  
   const { scrollYProgress } = useScroll({
     target: scrollContainerRef,
     offset: ["start start", "end end"]
@@ -59,15 +63,25 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
   const modelOpacity = useTransform(scrollYProgress, [0.94, 0.98, 1], [0, 1, 1]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1]);
 
+  // Dynamically control display styles to unmount/hide rendering containers when outside their active scroll range.
+  // This completely eliminates WebGL/2D canvas composite layers from the browser's active painting tree when out of view,
+  // entirely preventing the fullscreen white/gray overlay GPU rendering bug and saving huge performance resources.
+  const sequenceDisplay = useTransform(scrollYProgress, (v) => (v >= 0.98 ? "none" : "flex"));
+  const modelDisplay = useTransform(scrollYProgress, (v) => (v >= 0.94 && v < 1.02 ? "block" : "none"));
+
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const updateDimensions = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      dimensionsRef.current = { width: w, height: h, dpr };
+      setWindowSize({ width: w, height: h });
     };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
   const totalFrames = 36;
@@ -90,34 +104,32 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     }
   }, []);
 
-  useEffect(() => {
-    if (images.length === totalFrames) {
-        const currentProgress = scrollYProgress.get();
-        const frameIndex = Math.min(
-            totalFrames - 1,
-            Math.floor(currentProgress * totalFrames)
-        );
-        renderFrame(frameIndex);
-    }
-  }, [images]);
+  // Track last rendered frame to skip redundant draws
+  const lastFrameRef = useRef(-1);
 
-  const renderFrame = (index: number) => {
+  const renderFrame = useCallback((index: number) => {
+    // Skip if we already rendered this exact frame
+    if (index === lastFrameRef.current) return;
+    
     const canvas = canvasRef.current;
     if (!canvas || !images[index]) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    lastFrameRef.current = index;
     const img = images[index];
-    const dpr = window.devicePixelRatio || 1;
+    
+    // Use cached dimensions instead of reading window.innerWidth (avoids layout thrashing)
+    const { width, height, dpr } = dimensionsRef.current;
     
     // Set size in memory only if it has changed, preventing layout thrashing on scroll
-    const targetWidth = window.innerWidth * dpr;
-    const targetHeight = window.innerHeight * dpr;
+    const targetWidth = width * dpr;
+    const targetHeight = height * dpr;
     if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
       canvas.width = targetWidth;
       canvas.height = targetHeight;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
     }
 
     const imgRatio = img.width / img.height;
@@ -140,7 +152,18 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-  };
+  }, [images]);
+
+  useEffect(() => {
+    if (images.length === totalFrames) {
+        const currentProgress = scrollYProgress.get();
+        const frameIndex = Math.min(
+            totalFrames - 1,
+            Math.floor(currentProgress * totalFrames)
+        );
+        renderFrame(frameIndex);
+    }
+  }, [images, renderFrame]);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     if (images.length === totalFrames && latest < 0.98) {
@@ -154,19 +177,21 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
   useEffect(() => {
     if (images.length === totalFrames && windowSize.width > 0) {
+        // Reset lastFrameRef to force a redraw after resize
+        lastFrameRef.current = -1;
         const currentFrame = Math.min(
             totalFrames - 1,
             Math.floor(scrollYProgress.get() * totalFrames)
         );
         renderFrame(currentFrame);
     }
-  }, [images, windowSize]);
+  }, [images, windowSize, renderFrame]);
 
   return (
     <div className="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent">
       {/* 2D Image Sequence Canvas */}
       <motion.div 
-        style={{ scale, opacity: sequenceOpacity }}
+        style={{ scale, opacity: sequenceOpacity, display: sequenceDisplay }}
         className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
       >
         <canvas
@@ -177,13 +202,13 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
       {/* 3D Model Canvas */}
       <motion.div 
-        style={{ opacity: modelOpacity }}
-        className="absolute inset-0 z-20"
+        style={{ opacity: modelOpacity, display: modelDisplay }}
+        className="absolute inset-0 z-20 pointer-events-none"
       >
         <Canvas
           camera={{ position: [0, 0, 5], fov: 45 }}
           gl={{ alpha: true, antialias: true }}
-          style={{ background: "transparent" }}
+          style={{ background: "transparent", pointerEvents: "none" }}
         >
           <ambientLight intensity={1} />
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 const TeamsInfoComponent = dynamic(() => import("@/components/common/TeamsInfoComponent"), { ssr: false });
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import FAQ from "@/components/FAQ";
 const TeamCard = dynamic(() => import("@/app/team/TeamCard"), { ssr: false });
@@ -36,6 +36,20 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const heroPinRef = useRef<HTMLDivElement>(null);
 
+  // ── Transform-based pinning ──
+  // Replaces CSS `position: sticky` which triggers a main-thread layout
+  // recalculation on every scroll frame, causing subpixel vertical jitter.
+  // Instead, we compute a translateY that counteracts the scroll, running
+  // entirely on the GPU compositor — no layout thrashing, no pixel snapping.
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroPinRef,
+    offset: ["start start", "end end"]
+  });
+  // As the 200vh wrapper scrolls through the viewport, the inner element
+  // needs translateY = scrollProgress * 100% of its own height (100vh)
+  // to stay visually "pinned" at the top.
+  const stickyY = useTransform(heroScrollProgress, [0, 1], ["0%", "100%"]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((i) =>
@@ -65,12 +79,19 @@ export default function Home() {
   
       {/* Pinning Wrapper for Hero Section */}
       <div ref={heroPinRef} className="relative h-[200vh] z-10">
-        <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+        <motion.div
+          className="h-screen w-full overflow-hidden flex items-center justify-center"
+          style={{
+            y: stickyY,
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+          }}
+        >
           {/* ScrollVelocity (behind) */}
           <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
             <ScrollVelocity
               texts={['We Are IEEE CS,', 'We Are IEEE CS']} 
-              velocity={100}
+              velocity={30}
               className="custom-scroll-text"
               scrollContainerRef={heroPinRef}
             />
@@ -80,7 +101,7 @@ export default function Home() {
           <div className="relative z-10 w-full h-full">
             <HeroImageSequence scrollContainerRef={heroPinRef} />
           </div>
-        </div>
+        </motion.div>
       </div>
       
       <AnimatePresence mode="wait">

@@ -65,7 +65,7 @@ export default function NewComponent() {
         className="relative w-full lg:w-[40vw] h-[50vh] lg:h-[80vh] will-change-transform flex items-center justify-center lg:block"
       >
         <img
-          src="/images/events/2.png"
+          src="/images/events/2.avif"
           alt="cover"
           className="h-full object-cover lg:translate-x-20"
         />
