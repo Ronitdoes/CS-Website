@@ -51,7 +51,7 @@ export default function LogoScrollWrapper() {
           trigger: "#about-scroll-canvas",
           start: "top top",
           end: "bottom top",
-          scrub: 0.8, // Snappy but beautifully smooth cinematic response
+          scrub: 0.5, // Snappy but beautifully smooth cinematic response
           invalidateOnRefresh: true,
         },
       });
