@@ -72,6 +72,14 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
       const dpr = window.devicePixelRatio || 1;
       dimensionsRef.current = { width: w, height: h, dpr };
       setWindowSize({ width: w, height: h });
+
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+      }
     };
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
@@ -113,38 +121,29 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     lastFrameRef.current = index;
     const img = images[index];
     
-    // Use cached dimensions instead of reading window.innerWidth (avoids layout thrashing)
-    const { width, height, dpr } = dimensionsRef.current;
-    
-    // Set size in memory only if it has changed, preventing layout thrashing on scroll
-    const targetWidth = width * dpr;
-    const targetHeight = height * dpr;
-    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-    }
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    if (canvasWidth === 0 || canvasHeight === 0) return;
 
     const imgRatio = img.width / img.height;
-    const canvasRatio = canvas.width / canvas.height;
+    const canvasRatio = canvasWidth / canvasHeight;
     let drawWidth, drawHeight, offsetX, offsetY;
 
     if (canvasRatio > imgRatio) {
         // Canvas is wider than image (relatively)
-        drawWidth = canvas.width;
-        drawHeight = canvas.width / imgRatio;
+        drawWidth = canvasWidth;
+        drawHeight = canvasWidth / imgRatio;
         offsetX = 0;
-        offsetY = (canvas.height - drawHeight) / 2;
+        offsetY = (canvasHeight - drawHeight) / 2;
     } else {
         // Canvas is taller than image (relatively)
-        drawWidth = canvas.height * imgRatio;
-        drawHeight = canvas.height;
-        offsetX = (canvas.width - drawWidth) / 2;
+        drawWidth = canvasHeight * imgRatio;
+        drawHeight = canvasHeight;
+        offsetX = (canvasWidth - drawWidth) / 2;
         offsetY = 0;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   }, [images]);
 
@@ -152,8 +151,12 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     if (!scrollContainerRef?.current || !sequenceRef.current || !modelRef.current) return;
 
     // Initial setup
+    // Keep 3D model container as display: block at all times to pre-warm the WebGL context,
+    // compile shaders, and render initial frames immediately at 100vw/100vh.
     gsap.set(sequenceRef.current, { opacity: 1, display: "flex" });
-    gsap.set(modelRef.current, { opacity: 0, display: "none" });
+    gsap.set(modelRef.current, { opacity: 0, display: "block" });
+
+    const playhead = { frame: 0 };
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -161,17 +164,7 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
         trigger: scrollContainerRef.current,
         start: "top top",
         end: "bottom bottom",
-        scrub: true,
-        onUpdate: (self) => {
-          const latest = self.progress;
-          if (images.length === totalFrames && latest < 0.98) {
-            const frameIndex = Math.min(
-              totalFrames - 1,
-              Math.floor(latest * totalFrames)
-            );
-            renderFrame(frameIndex);
-          }
-        }
+        scrub: 0.5, // cinematic smooth catch-up
       }
     });
 
@@ -190,22 +183,28 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
     tl.set(sequenceRef.current, { display: "none" }, 0.98);
 
-    // Model Opacity/Display
-    tl.set(modelRef.current, { display: "block" }, 0.1);
+    // Model Opacity/Display (No display toggles to prevent Layout Thrashing or ResizeObserver delays)
     tl.to(modelRef.current, {
       opacity: 1,
       duration: 0.04,
       ease: "none",
     }, 0.94);
 
+    // Frame sequence playhead tween
+    tl.to(playhead, {
+      frame: totalFrames - 1,
+      duration: 0.94,
+      ease: "none",
+      onUpdate: () => {
+        if (images.length === totalFrames) {
+          renderFrame(Math.floor(playhead.frame));
+        }
+      }
+    }, 0);
+
     // Ensure the initial render frame is called once the timeline/scrolltrigger is built
-    const trigger = ScrollTrigger.getById("hero-sequence-trigger");
-    if (trigger && images.length === totalFrames) {
-      const frameIndex = Math.min(
-        totalFrames - 1,
-        Math.floor(trigger.progress * totalFrames)
-      );
-      renderFrame(frameIndex);
+    if (images.length === totalFrames) {
+      renderFrame(0);
     }
 
   }, { dependencies: [scrollContainerRef, images], scope: sequenceRef });
@@ -234,6 +233,11 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
         <canvas
           ref={canvasRef}
           className="w-full h-full block"
+          style={{
+            willChange: "transform",
+            transform: "translate3d(0, 0, 0)",
+            backfaceVisibility: "hidden",
+          }}
         />
       </div>
 

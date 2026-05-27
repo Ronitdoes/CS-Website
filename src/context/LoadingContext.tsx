@@ -1,7 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { useProgress } from "@react-three/drei";
+import { useProgress, useGLTF, useEnvironment } from "@react-three/drei";
+
+// Eagerly preload critical 3D assets at application startup.
+// These are tracked by R3F's useProgress() and block the preloader until loaded.
+useGLTF.preload("/logos/ieee.glb", true);
+useEnvironment.preload({ files: "/potsdamer_platz_1k.hdr" });
 
 interface LoadingContextType {
   isAssetsLoaded: boolean;

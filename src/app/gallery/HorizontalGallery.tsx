@@ -75,7 +75,7 @@ export default function HorizontalGallery() {
     // Mobile specific animations if any
     mm.add("(max-width: 767px)", () => {
       const items = gsap.utils.toArray<HTMLElement>('.skill-set > div');
-      
+
       items.forEach((item) => {
         gsap.fromTo(item, 
           { y: 50, opacity: 0 },
