@@ -55,13 +55,11 @@ export default function SmoothScrollProvider({
             clearTimeout(timer);
             gsap.ticker.remove(tickerFn);
             lenis.off("scroll", handleLenisScroll);
-            ScrollTrigger.getAll().forEach((t) => t.kill(true));
+            ScrollTrigger.getAll().forEach((t) => t.kill());
             lenis.destroy();
             lenisRef.current = null;
-            setLenis(null);
             document.body.style.overflow = "auto";
             document.documentElement.style.overflow = "auto";
-            ScrollTrigger.refresh();
         };
     }, []);
 

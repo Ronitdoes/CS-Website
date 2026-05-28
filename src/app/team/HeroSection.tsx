@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -86,14 +86,14 @@ export default function HeroSection() {
 
 
   // Pull HeroSection up to cover the sticky navbar
-  useEffect(() => {
+  useLayoutEffect(() => {
     const nav = document.querySelector('nav')
     if (nav && heroRef.current) {
       heroRef.current.style.marginTop = `-${nav.clientHeight}px`
     }
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       // ENTRANCE: content slides up
       gsap.from(contentRef.current, {

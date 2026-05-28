@@ -59,13 +59,13 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
 
       // Kill ALL ScrollTriggers with force unpin - this unpins pinned elements (like HorizontalGallery)
       ScrollTrigger.getAll().forEach((trigger) => {
-        trigger.kill(true) // true = force unpin and revert inline styles
+        trigger.kill()
       })
 
       // Destroy Lenis completely
       lenis.destroy()
       lenisRef.current = null
-      setLenis(null)
+      // do NOT setLenis(null) — triggers a re-render during unmount
 
       // AGGRESSIVE cleanup - Lenis might have locked scroll
       // Force enable scrolling on all elements
@@ -89,18 +89,14 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       // Force browser to recalculate scroll capacity
       window.dispatchEvent(new Event('scroll', { bubbles: true }))
 
-      // Give browser time to process changes before next page mounts
-      setTimeout(() => {
-        // Double-check scroll is unlocked
-        if (document.body.style.overflow === 'hidden') {
-          document.body.style.overflow = 'auto'
-        }
-        if (document.documentElement.style.overflow === 'hidden') {
-          document.documentElement.style.overflow = 'auto'
-        }
-        // Refresh ScrollTrigger to reset global state for next page
-        ScrollTrigger.refresh()
-      }, 0)
+      // Double-check scroll is unlocked
+      if (document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = 'auto'
+      }
+      if (document.documentElement.style.overflow === 'hidden') {
+        document.documentElement.style.overflow = 'auto'
+      }
+      // do NOT ScrollTrigger.refresh() here — causes DOM reads during teardown
     }
   }, [])
 
