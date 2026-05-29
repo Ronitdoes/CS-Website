@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { eventImages } from "@/src/data/eventImages";
+import { eventImages } from "@/data/eventImages";
 
 export default function TiltedPhotoGrid() {
   const gridItems = Array(10).fill(eventImages).flat();

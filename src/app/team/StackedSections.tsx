@@ -7,7 +7,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 import MemberCard from "./MemberCard";
 
-import { WEB_MEMBERS, CORE_MEMBERS, TeamMember } from '@/src/data/teamData';
+import { WEB_MEMBERS, CORE_MEMBERS, TeamMember } from '@/data/teamData';
 
 
 

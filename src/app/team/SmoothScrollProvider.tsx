@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, createContext, useContext } from 'react'
+import { useEffect, useRef, createContext, useContext, useState } from 'react'
 import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -14,6 +14,7 @@ export function useLenis() {
 }
 
 export default function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
+  const [lenis, setLenis] = useState<Lenis | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
@@ -28,6 +29,9 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     })
 
     lenisRef.current = lenis
+    const timer = setTimeout(() => {
+      setLenis(lenis)
+    }, 0)
 
     // Force scroll to top on mount and after Lenis init
     if ('scrollRestoration' in history) {
@@ -46,6 +50,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
     gsap.ticker.lagSmoothing(0)
 
     return () => {
+      clearTimeout(timer)
       // STOP ticker before destroying anything else
       gsap.ticker.remove(tickerFn)
 
@@ -54,12 +59,13 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
 
       // Kill ALL ScrollTriggers with force unpin - this unpins pinned elements (like HorizontalGallery)
       ScrollTrigger.getAll().forEach((trigger) => {
-        trigger.kill(true) // true = force unpin and revert inline styles
+        trigger.kill()
       })
 
       // Destroy Lenis completely
       lenis.destroy()
       lenisRef.current = null
+      // do NOT setLenis(null) — triggers a re-render during unmount
 
       // AGGRESSIVE cleanup - Lenis might have locked scroll
       // Force enable scrolling on all elements
@@ -73,8 +79,6 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       document.documentElement.style.transform = ''
       
       // Force scroll position to top
-      window.scrollY = 0
-      window.pageYOffset = 0
       document.documentElement.scrollTop = 0
       document.body.scrollTop = 0
 
@@ -85,23 +89,19 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       // Force browser to recalculate scroll capacity
       window.dispatchEvent(new Event('scroll', { bubbles: true }))
 
-      // Give browser time to process changes before next page mounts
-      setTimeout(() => {
-        // Double-check scroll is unlocked
-        if (document.body.style.overflow === 'hidden') {
-          document.body.style.overflow = 'auto'
-        }
-        if (document.documentElement.style.overflow === 'hidden') {
-          document.documentElement.style.overflow = 'auto'
-        }
-        // Refresh ScrollTrigger to reset global state for next page
-        ScrollTrigger.refresh()
-      }, 0)
+      // Double-check scroll is unlocked
+      if (document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = 'auto'
+      }
+      if (document.documentElement.style.overflow === 'hidden') {
+        document.documentElement.style.overflow = 'auto'
+      }
+      // do NOT ScrollTrigger.refresh() here — causes DOM reads during teardown
     }
   }, [])
 
   return (
-    <LenisContext.Provider value={lenisRef.current}>
+    <LenisContext.Provider value={lenis}>
       {children}
     </LenisContext.Provider>
   )

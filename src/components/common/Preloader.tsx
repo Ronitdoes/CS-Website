@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useLoading } from "@/src/context/LoadingContext";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function Preloader() {
   const { isReady, setVideoFinished } = useLoading();
@@ -42,6 +42,7 @@ export default function Preloader() {
             onEnded={handleVideoEnd}
             className="w-full h-full object-contain md:object-cover"
           >
+            <source src="/cs-microchip.webm" type="video/webm" />
             <source src="/cs-microchip.mp4" type="video/mp4" />
             
           </video>
