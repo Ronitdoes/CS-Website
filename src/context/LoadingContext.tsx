@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useProgress, useGLTF, useEnvironment } from "@react-three/drei";
+import { usePathname } from "next/navigation";
 
 // Eagerly preload critical 3D assets at application startup.
 // These are tracked by R3F's useProgress() and block the preloader until loaded.
@@ -19,6 +20,10 @@ interface LoadingContextType {
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [lastPathname, setLastPathname] = useState(pathname);
+  const isFirstRender = useRef(true);
+
   const [isVideoFinished, setVideoFinished] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("preloaderShown") === "true";
@@ -28,10 +33,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const { progress, active } = useProgress();
   const [isAssetsLoaded, setAssetsLoaded] = useState(false);
 
-  // Once assets have loaded for the first time we latch this to true and
-  // never reset it — this prevents subsequent lazy-loaded Three.js assets
-  // (e.g. GLB models that mount as the user scrolls) from briefly setting
-  // isAssetsLoaded back to false and re-showing the preloader.
   const hasEverLoaded = useRef(false);
 
   useEffect(() => {
@@ -48,6 +49,68 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       return () => clearTimeout(timer);
     }
   }, [progress, active]);
+  
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      window.location.reload();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [pathname]);
+  useEffect(() => {
+    const handleLinkClick = (e: MouseEvent) => {
+      if (
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      if (
+        (href.startsWith("http") && !href.startsWith(window.location.origin)) ||
+        href.startsWith("#") ||
+        href.startsWith("mailto:") ||
+        href.startsWith("tel:") ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      ) {
+        return;
+      }
+
+      try {
+        const targetUrl = new URL(href, window.location.origin);
+        if (
+          targetUrl.pathname === window.location.pathname &&
+          targetUrl.search === window.location.search
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        window.location.href = href;
+      } catch (err) {
+        // Fallback
+      }
+    };
+
+    document.addEventListener("click", handleLinkClick, true);
+    return () => document.removeEventListener("click", handleLinkClick, true);
+  }, []);
 
   const isReady = isAssetsLoaded && isVideoFinished;
 
