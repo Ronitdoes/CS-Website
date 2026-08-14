@@ -357,9 +357,33 @@
 }
 
 @media (max-width: 640px) {
-  .tvScreen  { width: 320px; height: 240px; }
-  .tvCabinet { padding: 16px 18px 24px; }
-  .chBtn     { width: 36px; height: 26px; font-size: 14px; }
-  .screenStat  { font-size: 56px; }
-  .screenLabel { font-size: 20px; }
+  .tvCabinet {
+    width: 100%;
+    max-width: min(380px, calc(100vw - 32px));
+    padding: 12px 14px 20px;
+    box-sizing: border-box;
+  }
+  .tvBezel {
+    padding: 10px;
+  }
+  .tvScreen {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+  .chBtn {
+    width: 36px;
+    height: 26px;
+    font-size: 14px;
+  }
+  .screenStat {
+    font-size: clamp(38px, 10vw, 56px);
+  }
+  .screenLabel {
+    font-size: clamp(14px, 4vw, 20px);
+  }
+  .screenDesc {
+    font-size: clamp(8px, 2vw, 9.5px);
+  }
 }

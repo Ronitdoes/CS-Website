@@ -158,7 +158,7 @@
 
 @media (max-width: 768px) {
   .footerWrapper {
-    padding: 6rem 1.25rem 3.5rem;
+    padding: 6rem max(1.25rem, env(safe-area-inset-right, 1.25rem)) max(3.5rem, calc(2.5rem + env(safe-area-inset-bottom, 0px))) max(1.25rem, env(safe-area-inset-left, 1.25rem));
   }
 
   .footerCard {
@@ -188,7 +188,7 @@
 
 @media (max-width: 600px) {
   .footerWrapper {
-    padding: 5rem 1rem 3rem;
+    padding: 5rem max(1rem, env(safe-area-inset-right, 1rem)) max(3rem, calc(2rem + env(safe-area-inset-bottom, 0px))) max(1rem, env(safe-area-inset-left, 1rem));
   }
 
   .footerCard {
@@ -205,7 +205,7 @@
 
 @media (max-width: 480px) {
   .footerWrapper {
-    padding: 4rem 0.75rem 3rem;
+    padding: 4rem max(0.75rem, env(safe-area-inset-right, 0.75rem)) max(3rem, calc(2rem + env(safe-area-inset-bottom, 0px))) max(0.75rem, env(safe-area-inset-left, 0.75rem));
   }
 
   .footerCard {
@@ -242,7 +242,7 @@
 
 @media (max-width: 360px) {
   .footerWrapper {
-    padding: 3rem 0.5rem 2.5rem;
+    padding: 3rem max(0.5rem, env(safe-area-inset-right, 0.5rem)) max(2.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px))) max(0.5rem, env(safe-area-inset-left, 0.5rem));
   }
 
   .footerCard {

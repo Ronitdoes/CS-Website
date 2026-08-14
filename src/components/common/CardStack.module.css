@@ -223,40 +223,42 @@
         --translateY: 0vw;
     }
 
-    .cards.open .card:hover {
-        --offsetY: -8vw;
-    }
+    @media (hover: hover) {
+        .cards.open .card:hover {
+            --offsetY: -8vw;
+        }
 
-    .cards.open .card:hover+.card {
-        --offsetTranslateX: 12vw;
-    }
+        .cards.open .card:hover+.card {
+            --offsetTranslateX: 12vw;
+        }
 
-    .cards.open .card:hover+.card+.card {
-        --offsetTranslateX: 10vw;
-    }
+        .cards.open .card:hover+.card+.card {
+            --offsetTranslateX: 10vw;
+        }
 
-    .cards.open .card:hover+.card+.card+.card {
-        --offsetTranslateX: 8vw;
-    }
+        .cards.open .card:hover+.card+.card+.card {
+            --offsetTranslateX: 8vw;
+        }
 
-    .cards.open .card:hover+.card+.card+.card+.card {
-        --offsetTranslateX: 6vw;
-    }
+        .cards.open .card:hover+.card+.card+.card+.card {
+            --offsetTranslateX: 6vw;
+        }
 
-    .cards.open .card:has(+ .card:hover) {
-        --offsetTranslateX: -12vw;
-    }
+        .cards.open .card:has(+ .card:hover) {
+            --offsetTranslateX: -12vw;
+        }
 
-    .cards.open .card:has(+ .card + .card:hover) {
-        --offsetTranslateX: -10vw;
-    }
+        .cards.open .card:has(+ .card + .card:hover) {
+            --offsetTranslateX: -10vw;
+        }
 
-    .cards.open .card:has(+ .card + .card + .card:hover) {
-        --offsetTranslateX: -8vw;
-    }
+        .cards.open .card:has(+ .card + .card + .card:hover) {
+            --offsetTranslateX: -8vw;
+        }
 
-    .cards.open .card:has(+ .card + .card + .card + .card:hover) {
-        --offsetTranslateX: -6vw;
+        .cards.open .card:has(+ .card + .card + .card + .card:hover) {
+            --offsetTranslateX: -6vw;
+        }
     }
 }
 

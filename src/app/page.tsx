@@ -12,7 +12,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import LineBackground from "@/components/LineBackground";
-import ScrollVelocity from "@/components/ScrollVelocity";
+const ScrollVelocity = dynamic(() => import("@/components/ScrollVelocity"), { ssr: false });
 
 const FAQ = dynamic(() => import("@/components/FAQ"), { ssr: false });
 const Newsletter = dynamic(() => import("@/components/Newsletter"), { ssr: false });
@@ -137,7 +137,7 @@ export default function Home() {
       {/* Pinning Wrapper for Hero Section */}
       <div ref={heroPinRef} className="relative h-[200vh] z-10">
         <div
-          className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center"
+          className="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden flex items-center justify-center"
           style={{
             willChange: 'transform',
             backfaceVisibility: 'hidden',
@@ -164,12 +164,10 @@ export default function Home() {
       {showIntro ? (
         <div
           ref={introRef}
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md md:backdrop-blur-xl"
           style={{ 
             willChange: "transform, opacity",
-            backgroundColor: "rgba(0, 0, 0, 0.45)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            backgroundColor: "rgba(0, 0, 0, 0.55)",
           }}
         >
           {/* Vertical mask viewport to clip sliding text */}

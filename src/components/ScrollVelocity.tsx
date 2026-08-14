@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useLayoutEffect, useCallback } from 'react';
 import {
   motion,
@@ -45,41 +47,45 @@ interface ScrollVelocityProps {
 }
 
 /**
- * Measures element width WITHOUT triggering React re-renders.
- * Uses a ref instead of useState to avoid re-render cascades during scroll/resize.
- * The width is read directly in the animation frame where it's needed.
+ * Measures element width with subpixel accuracy WITHOUT triggering React re-renders.
+ * Uses ResizeObserver and font loading hooks with immediate fallback.
  */
 function useElementWidthRef<T extends HTMLElement>(ref: React.RefObject<T | null>): React.MutableRefObject<number> {
-  const widthRef = useRef(0);
+  const widthRef = useRef<number>(0);
 
   useLayoutEffect(() => {
     if (!ref.current) return;
-
     const element = ref.current;
-    
-    // Set initial width
-    widthRef.current = element.offsetWidth;
+
+    const measure = () => {
+      const rect = element.getBoundingClientRect();
+      const w = rect.width || element.offsetWidth || element.scrollWidth || 0;
+      if (w > 0) {
+        widthRef.current = w;
+      }
+    };
+
+    // Initial measurement
+    measure();
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const rect = entry.contentRect;
-        if (rect) {
+        if (rect && rect.width > 0) {
           widthRef.current = rect.width;
         } else {
-          widthRef.current = element.offsetWidth;
+          measure();
         }
       }
     });
 
     resizeObserver.observe(element);
 
-    // Also trigger update once fonts are fully loaded to avoid layout shifts
+    // Refresh after fonts are fully loaded to prevent initial 0-width stall
     if (typeof document !== 'undefined' && 'fonts' in document) {
       document.fonts.ready.then(() => {
-        if (ref.current) {
-          widthRef.current = ref.current.offsetWidth;
-        }
-      });
+        measure();
+      }).catch(() => {});
     }
 
     return () => {
@@ -95,110 +101,158 @@ function VelocityText({
   baseVelocity,
   scrollContainerRef,
   className = '',
-  damping,
-  stiffness,
-  numCopies,
-  velocityMapping,
+  damping = 80,
+  stiffness = 150,
+  numCopies = 6,
+  velocityMapping = { input: [0, 1000], output: [0, 1.5] },
   parallaxClassName,
   scrollerClassName,
   parallaxStyle,
   scrollerStyle
 }: VelocityTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isVisibleRef = useRef(true);
-  const baseX = useMotionValue(0);
+  // Default to visible = true so animation starts immediately on mount
+  const isVisibleRef = useRef<boolean>(true);
+  const baseX = useMotionValue<number>(0);
 
-  // Track the actual window scroll (page scroll) instead of the non-scrollable container ref.
+  // Track the actual window scroll
   const { scrollY } = useScroll();
   const scrollVelocity = useVelocity(scrollY);
-  
-  // Use a much higher damping and lower stiffness by default to smooth out any instant velocity spikes.
+
+  // Smooth scroll velocity using spring physics
   const smoothVelocity = useSpring(scrollVelocity, {
-    damping: damping ?? 100,
-    stiffness: stiffness ?? 100
+    damping,
+    stiffness
   });
 
-  // Cap the velocity factor map to [0, 1.2] and enable clamping to prevent wild spinning on rapid scrolls.
+  // Velocity boost factor (0 to max output based on scroll intensity)
   const velocityFactor = useTransform(
     smoothVelocity,
-    velocityMapping?.input || [0, 1000],
-    velocityMapping?.output || [0, 1.2],
+    velocityMapping.input,
+    velocityMapping.output,
     { clamp: true }
   );
 
   const copyRef = useRef<HTMLSpanElement>(null);
   const copyWidthRef = useElementWidthRef(copyRef);
 
+  // Resilient IntersectionObserver with threshold: 0 and generous rootMargin
   useLayoutEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || typeof IntersectionObserver === "undefined") return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        isVisibleRef.current = entry.isIntersecting;
+        if (entry) {
+          isVisibleRef.current = entry.isIntersecting;
+        }
       },
-      { threshold: 0.01 }
+      {
+        threshold: 0,
+        rootMargin: "250px 0px 250px 0px"
+      }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Also re-verify visibility on window resize or tab visibility change
+    const handleCheck = () => {
+      if (document.hidden) {
+        isVisibleRef.current = false;
+      } else {
+        isVisibleRef.current = true;
+      }
+    };
+    document.addEventListener("visibilitychange", handleCheck);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleCheck);
+    };
   }, []);
 
+  // Safe wrapping function: bounds checked to avoid divide-by-zero or NaN
   const wrap = useCallback((min: number, max: number, v: number): number => {
     const range = max - min;
+    if (range <= 0 || !Number.isFinite(range) || !Number.isFinite(v)) {
+      return 0;
+    }
     const mod = (((v - min) % range) + range) % range;
     return mod + min;
   }, []);
 
-  const x = useTransform(baseX, v => {
-    const w = copyWidthRef.current;
-    if (w === 0) return '0px';
+  // Frame transform with fallback width check
+  const x = useTransform(baseX, (v) => {
+    let w = copyWidthRef.current;
+    // Live self-heal: if width ref is 0, attempt a direct read
+    if (w <= 0 && copyRef.current) {
+      w = copyRef.current.getBoundingClientRect().width || copyRef.current.offsetWidth || 0;
+      if (w > 0) {
+        copyWidthRef.current = w;
+      }
+    }
+    if (w <= 0 || !Number.isFinite(w) || !Number.isFinite(v)) {
+      return '0px';
+    }
     return `${Math.round(wrap(-w, 0, v))}px`;
   });
 
-  const directionFactor = useRef<number>(1);
-  useAnimationFrame((t, delta) => {
+  useAnimationFrame((_, delta) => {
+    // Skip frames when hidden or offscreen
     if (!isVisibleRef.current || (typeof document !== "undefined" && document.hidden)) {
       return;
     }
 
-    // Clamp frame delta to prevent massive jumps/glitches during lag spikes or tab switching
-    const clampedDelta = Math.min(delta, 100);
-    const rawVFactor = velocityFactor.get();
-    
-    // Extra safety cap: guarantee the speedup factor is always bounded to prevent visual blur/stutter
-    const vFactor = Math.max(-1.5, Math.min(1.5, rawVFactor));
-    let moveBy = directionFactor.current * baseVelocity * (clampedDelta / 1000);
+    // Clamp delta between 0 and 100ms to eliminate tab switch or lag jumps
+    const clampedDelta = Math.max(0, Math.min(delta, 100));
 
-    // Dead zone: prevent direction flipping when velocity is near zero
-    if (vFactor < -0.05) {
-      directionFactor.current = -1;
-    } else if (vFactor > 0.05) {
-      directionFactor.current = 1;
+    // Ensure raw boost factor is a valid finite number
+    const rawVFactor = velocityFactor.get();
+    const vFactor = Number.isFinite(rawVFactor) ? Math.max(0, Math.min(2.5, Math.abs(rawVFactor))) : 0;
+
+    // Smooth movement in the baseVelocity direction with scroll speedup boost
+    let moveBy = baseVelocity * (clampedDelta / 1000) * (1 + vFactor);
+
+    if (!Number.isFinite(moveBy)) {
+      moveBy = baseVelocity * (clampedDelta / 1000);
     }
 
-    moveBy += directionFactor.current * moveBy * vFactor;
-    baseX.set(baseX.get() + moveBy);
+    const currentX = baseX.get();
+    const nextX = Number.isFinite(currentX) ? currentX + moveBy : 0;
+    baseX.set(nextX);
   });
 
   const spans = [];
-  for (let i = 0; i < (numCopies ?? 6); i++) {
+  const copies = Math.max(4, numCopies ?? 6);
+  for (let i = 0; i < copies; i++) {
     spans.push(
-      <span className={`flex-shrink-0 ${className}`} key={i} ref={i === 0 ? copyRef : null}>
+      <span
+        className={`flex-shrink-0 select-none ${className}`}
+        key={i}
+        ref={i === 0 ? copyRef : null}
+      >
         {children}&nbsp;
       </span>
     );
   }
 
   return (
-    <div ref={containerRef} className={`${parallaxClassName || ''} relative overflow-hidden`} style={parallaxStyle}>
+    <div
+      ref={containerRef}
+      className={`${parallaxClassName || ''} relative overflow-hidden select-none`}
+      style={{
+        ...parallaxStyle,
+        contain: "paint",
+      }}
+    >
       <motion.div
-        className={`${scrollerClassName || ''} flex whitespace-nowrap text-center font-sans text-2xl font-bold tracking-[-0.02em] antialiased sm:text-4xl md:text-[5rem] md:leading-[5rem]`}
-        style={{ 
-          x, 
+        className={`${scrollerClassName || ''} flex whitespace-nowrap text-center font-sans text-2xl font-bold tracking-[-0.02em] antialiased sm:text-4xl md:text-[5rem] md:leading-[5rem] select-none`}
+        style={{
+          x,
           willChange: "transform",
+          transform: "translate3d(0, 0, 0)",
           backfaceVisibility: "hidden",
-          ...scrollerStyle 
+          ...scrollerStyle
         }}
       >
         {spans}
@@ -210,19 +264,19 @@ function VelocityText({
 export const ScrollVelocity: React.FC<ScrollVelocityProps> = ({
   scrollContainerRef,
   texts = [],
-  velocity = 50, // Premium slower base velocity
+  velocity = 35,
   className = '',
-  damping = 100, // Higher damping for smoother transitions
-  stiffness = 100, // Lower stiffness to avoid speed spikes
+  damping = 80,
+  stiffness = 150,
   numCopies = 6,
-  velocityMapping = { input: [0, 1000], output: [0, 1.2] }, // Capped speedup factor
+  velocityMapping = { input: [0, 1000], output: [0, 1.5] },
   parallaxClassName,
   scrollerClassName,
   parallaxStyle,
   scrollerStyle
 }) => {
   return (
-    <section>
+    <section className="select-none pointer-events-none">
       {texts.map((text, index) => (
         <VelocityText
           key={index}
@@ -246,3 +300,4 @@ export const ScrollVelocity: React.FC<ScrollVelocityProps> = ({
 };
 
 export default ScrollVelocity;
+

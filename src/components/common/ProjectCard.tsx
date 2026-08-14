@@ -30,7 +30,7 @@ interface CardProps {
   github?: string;
 }
 
-const cards: CardProps[] = [
+export const cards: CardProps[] = [
   {
     title: "Venom Portal",
     description: "The VENOM portal gave teams their room numbers, threw tasks at them, and kept the whole game running in real time. Avoiding boards and manual back and forth .",
@@ -56,6 +56,8 @@ const cards: CardProps[] = [
     github: "https://github.com/AwesomeSam9523/expense-tracker.git",
   },
 ];
+
+export const PROJECT_IMAGES = cards.map((c) => c.image);
 
 const ArrowIcon = React.memo(() => (
   <svg
@@ -122,7 +124,7 @@ const Card = React.memo(({ image, title, description, github }: CardProps) => {
       <div style={{ padding: "14px" }} className="flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-[10px]">
           <h3
-            className={`font-extrabold text-[30px] sm:text-[38px] tracking-[0.03em] uppercase text-white leading-none m-0 flex overflow-hidden ${barlowCondensed.className}`}
+            className={`font-extrabold text-[clamp(20px,4.8vw,26px)] sm:text-[38px] tracking-[0.03em] uppercase text-white leading-none m-0 flex overflow-hidden ${barlowCondensed.className}`}
           >
             {letterSpans}
           </h3>

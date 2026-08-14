@@ -8,7 +8,7 @@ import style from "./Navbar.module.css";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 
-const NAV_IMAGES = [
+export const NAV_IMAGES = [
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782386537059_8p7ddp.avif",
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782385702000_ecd65y.avif",
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782386405527_lbiscd.avif",

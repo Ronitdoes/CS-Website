@@ -4,6 +4,24 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { useProgress, useGLTF, useEnvironment } from "@react-three/drei";
 import { usePathname } from "next/navigation";
 import { EVENT_IMAGES } from "@/components/common/CardStack";
+import { HORIZONTAL_GALLERY_IMAGES } from "@/app/gallery/HorizontalGallery";
+import { SCROLL_GRID_IMAGES } from "@/components/common/ScrollGrid";
+import { GALLERY_3D_DEFAULT_IMAGES } from "@/components/common/Gallery3D";
+import { PROJECT_IMAGES } from "@/components/common/ProjectCard";
+import { NAV_IMAGES } from "@/components/common/Navbar";
+
+export const GALLERY_IMAGES = [
+  ...HORIZONTAL_GALLERY_IMAGES,
+  ...SCROLL_GRID_IMAGES,
+  ...GALLERY_3D_DEFAULT_IMAGES,
+];
+
+export const ALL_PRELOAD_IMAGES = [
+  ...EVENT_IMAGES,
+  ...GALLERY_IMAGES,
+  ...PROJECT_IMAGES,
+  ...NAV_IMAGES,
+];
 
 // Eagerly preload critical 3D assets at application startup.
 // These are tracked by R3F's useProgress() and block the preloader until loaded.
@@ -25,9 +43,10 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [lastPathname, setLastPathname] = useState(pathname);
   const isFirstRender = useRef(true);
 
-  // Eagerly preload and decode "Our Events" card images in background thread
+  // Eagerly preload and decode all critical site images in background thread during preloader
   useEffect(() => {
-    EVENT_IMAGES.forEach((src) => {
+    const allImages = Array.from(new Set(ALL_PRELOAD_IMAGES));
+    allImages.forEach((src) => {
       const img = new window.Image();
       img.src = src;
       if (typeof img.decode === "function") {

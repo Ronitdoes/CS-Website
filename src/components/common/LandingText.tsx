@@ -42,7 +42,7 @@ export default function ImpactText() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-25% 0px" }}
-            className="text-[1.5rem] sm:text-[2.6rem] md:text-[3.6rem] lg:text-[4.8rem] xl:text-[5.8rem] leading-[1.0] sm:leading-[0.95] lg:leading-[0.9] tracking-tight uppercase font-bold flex flex-col items-center w-full"
+            className="text-[clamp(1.25rem,6vw,1.5rem)] sm:text-[2.6rem] md:text-[3.6rem] lg:text-[4.8rem] xl:text-[5.8rem] leading-[1.0] sm:leading-[0.95] lg:leading-[0.9] tracking-tight uppercase font-bold flex flex-col items-center w-full"
             style={{ fontFamily: "var(--font-inter), 'Inter', sans-serif" }}
           >
 

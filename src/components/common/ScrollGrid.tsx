@@ -10,7 +10,7 @@ import {
 } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
 
-const IMAGES = [
+export const SCROLL_GRID_IMAGES = [
     'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560890144_eiggr.jpeg',
     'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562282146_spph3r.avif',
     'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562529818_eoed.avif',
@@ -27,6 +27,8 @@ const IMAGES = [
     'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782659869512_du1u.avif',
     'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782626687798_61ilal.webp',
 ];
+
+const IMAGES = SCROLL_GRID_IMAGES;
 
 interface CellProps {
     index: number;
