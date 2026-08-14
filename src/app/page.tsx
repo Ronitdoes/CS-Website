@@ -3,17 +3,14 @@
 import dynamic from "next/dynamic";
 const TeamsInfoComponent = dynamic(() => import("@/components/common/TeamsInfoComponent"), { ssr: false });
 import { useState, useEffect, useRef } from "react";
-const TeamCard = dynamic(() => import("@/app/team/TeamCard"), { ssr: false });
 const HorizontalGallery = dynamic(() => import("@/app/gallery/HorizontalGallery"), { ssr: false });
 const CardStack = dynamic(() => import("@/components/common/CardStack"), { ssr: false });
 const ProjectCard = dynamic(() => import("@/components/common/ProjectCard"), { ssr: false });
 const LandingText = dynamic(() => import("@/components/common/LandingText"), { ssr: false });
 const HeroImageSequence = dynamic(() => import("@/components/common/HeroImageSequence"), { ssr: false });
-import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
 import { useLoading } from "@/context/LoadingContext";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-//const NewComponent = dynamic(() => import("@/components/common/newComponent"),{ ssr: false });
 import LineBackground from "@/components/LineBackground";
 import ScrollVelocity from "@/components/ScrollVelocity";
 
@@ -61,12 +58,10 @@ export default function Home() {
 
     const tl = gsap.timeline({
       onComplete: () => {
-        // Cinematic lens focus fade-out: slight expansion, backdrop-blur fade-out, and opacity fade
+        // GPU-composited fade-out: smooth expansion and opacity fade
         gsap.to(introRef.current, {
           opacity: 0,
           scale: 1.03,
-          backdropFilter: "blur(0px)",
-          webkitBackdropFilter: "blur(0px)",
           duration: 0.65,
           ease: "power3.inOut",
           onComplete: () => {
@@ -128,8 +123,7 @@ export default function Home() {
   }, { dependencies: [startIntro], scope: introRef });
 
   return (
-    
-    <SmoothScrollProvider>
+    <>
       <div className="fixed inset-0 -z-10">
         <LineBackground
           lineColor="rgba(180, 140, 60, 0.75)"
@@ -172,7 +166,7 @@ export default function Home() {
           ref={introRef}
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ 
-            willChange: "transform, opacity, filter",
+            willChange: "transform, opacity",
             backgroundColor: "rgba(0, 0, 0, 0.45)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
@@ -186,7 +180,7 @@ export default function Home() {
               style={{
                 fontFamily:
                   "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif",
-                willChange: "transform, opacity, filter",
+                willChange: "transform, opacity",
                 opacity: 1,
                 transform: "translate3d(0, 0px, 0)",
               }}
@@ -228,6 +222,6 @@ export default function Home() {
 
         <div><FAQ/></div>
 
-    </SmoothScrollProvider>
+    </>
   );
 }

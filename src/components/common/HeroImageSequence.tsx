@@ -54,35 +54,53 @@ function Model({ url, scale = 0.35, position = [0, 0, 0] }: { url: string; scale
 useGLTF.preload("/logos/ieee.glb");
 
 export default function HeroImageSequence({ scrollContainerRef }: { scrollContainerRef?: React.RefObject<HTMLElement | null> }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sequenceRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
   const [images, setImages] = useState<HTMLImageElement[]>([]);
+  const [isHeroInView, setIsHeroInView] = useState(true);
   
   // Cache dimensions in a ref to avoid reading window.innerWidth/innerHeight on every scroll frame
-  // (reading those properties forces a layout/reflow)
   const dimensionsRef = useRef({ width: 0, height: 0, dpr: 1 });
 
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+  // Viewport intersection observer to pause WebGL rendering when offscreen
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsHeroInView(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const updateDimensions = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const dpr = window.devicePixelRatio || 1;
+      const isMobile = w < 768;
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
       dimensionsRef.current = { width: w, height: h, dpr };
       setWindowSize({ width: w, height: h });
 
       const canvas = canvasRef.current;
       if (canvas) {
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
         canvas.style.width = `${w}px`;
         canvas.style.height = `${h}px`;
       }
     };
     updateDimensions();
-    window.addEventListener("resize", updateDimensions);
+    window.addEventListener("resize", updateDimensions, { passive: true });
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
@@ -94,6 +112,7 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
     for (let i = 1; i <= totalFrames; i++) {
         const img = new Image();
+        img.decoding = "async";
         const frameIndex = i.toString().padStart(4, '0');
         img.src = `/Heroimg/${frameIndex}.avif`;
         img.onload = () => {
@@ -151,8 +170,6 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     if (!scrollContainerRef?.current || !sequenceRef.current || !modelRef.current) return;
 
     // Initial setup
-    // Keep 3D model container as display: block at all times to pre-warm the WebGL context,
-    // compile shaders, and render initial frames immediately at 100vw/100vh.
     gsap.set(sequenceRef.current, { opacity: 1, display: "flex" });
     gsap.set(modelRef.current, { opacity: 0, display: "block" });
 
@@ -223,8 +240,10 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     }
   }, [images, windowSize, renderFrame]);
 
+  const isMobile = windowSize.width > 0 && windowSize.width < 768;
+
   return (
-    <div className="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent">
+    <div ref={containerRef} className="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent">
       {/* 2D Image Sequence Canvas */}
       <div 
         ref={sequenceRef}
@@ -248,7 +267,9 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
       >
         <Canvas
           camera={{ position: [0, 0, 5], fov: 45 }}
-          gl={{ alpha: true, antialias: true }}
+          gl={{ alpha: true, antialias: !isMobile, powerPreference: "high-performance" }}
+          dpr={isMobile ? [1, 1.25] : [1, 1.5]}
+          frameloop={isHeroInView ? "always" : "never"}
           style={{ background: "transparent", pointerEvents: "none" }}
         >
           <ambientLight intensity={1} />
@@ -257,8 +278,8 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
           <Suspense fallback={null}>
             <Model 
               url="/logos/ieee.glb" 
-              scale={windowSize.width < 768 ? 0.22 : 0.35} 
-              position={windowSize.width < 768 ? [0, 0, 0] : [0, 0, 0]} 
+              scale={isMobile ? 0.22 : 0.35} 
+              position={isMobile ? [0, 0, 0] : [0, 0, 0]} 
             />
             <Environment files="/potsdamer_platz_1k.hdr" />
           </Suspense>

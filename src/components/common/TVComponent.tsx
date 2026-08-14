@@ -111,26 +111,51 @@ export default function TVComponent() {
     switchTo(currentCh - 1);
   }, [currentCh, switchTo]);
 
+  const [isInView, setIsInView] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const restartAutoTimer = useCallback(
     (delayMs = 1500) => {
       if (autoTimerRef.current) {
         clearInterval(autoTimerRef.current);
+        autoTimerRef.current = null;
       }
+      if (!isInView) return;
       autoTimerRef.current = setInterval(() => {
         next();
       }, delayMs);
     },
-    [next]
+    [next, isInView]
   );
 
   useEffect(() => {
-    restartAutoTimer(1500);
+    if (isInView) {
+      restartAutoTimer(1500);
+    } else if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
     return () => {
       if (autoTimerRef.current) {
         clearInterval(autoTimerRef.current);
       }
     };
-  }, [restartAutoTimer]);
+  }, [isInView, restartAutoTimer]);
 
   const handleInteraction = useCallback(() => {
     restartAutoTimer(3000);
@@ -175,7 +200,7 @@ export default function TVComponent() {
   }, []);
 
   const triggerGlitch = useCallback(() => {
-    if (switching) return;
+    if (switching || !isInView) return;
     spawnGlitchLines();
     setGlitching(true);
 
@@ -187,9 +212,10 @@ export default function TVComponent() {
       setGlitching(false);
       setGlitchLines([]);
     }, 150);
-  }, [switching, spawnGlitchLines]);
+  }, [switching, isInView, spawnGlitchLines]);
 
   useEffect(() => {
+    if (!isInView) return;
     let timerId: NodeJS.Timeout;
 
     const schedule = () => {
@@ -208,7 +234,7 @@ export default function TVComponent() {
         clearTimeout(glitchTimeoutRef.current);
       }
     };
-  }, [triggerGlitch]);
+  }, [isInView, triggerGlitch]);
 
   useEffect(() => {
     return () => {
@@ -272,7 +298,7 @@ export default function TVComponent() {
     .join(" ");
 
   return (
-    <div className={styles.tvWrap}>
+    <div ref={containerRef} className={styles.tvWrap}>
       <div className={styles.tvCabinet}>
         <div className={styles.tvBezel}>
           <div

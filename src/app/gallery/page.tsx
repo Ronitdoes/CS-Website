@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import LineBackground from '@/components/LineBackground';
 import ScrollGrid from '@/components/common/ScrollGrid';
 import HorizontalGallery from '@/app/gallery/HorizontalGallery';
-import SmoothScrollProvider from '@/app/team/SmoothScrollProvider';
 import ZoomGallery from '@/app/gallery/ZoomGallery';
 const Gallery3D = dynamic(() => import('@/components/common/Gallery3D'), { ssr: false });
 
@@ -46,9 +45,8 @@ export default function Gallery() {
     };
   }, []);
 
-  return (<>
-
-    <SmoothScrollProvider>
+  return (
+    <>
       <div className="relative min-h-screen bg-transparent w-full">
 
         <div className="fixed inset-0 -z-10 pointer-events-none">
@@ -111,7 +109,6 @@ export default function Gallery() {
           </div>*/}
         </div>
       </div>
-    </SmoothScrollProvider>
 
     <section
       className="relative z-50 block md:hidden overflow-hidden bg-transparent"

@@ -97,10 +97,11 @@ function ParticleCanvas() {
       }
     }
 
+    let isVisible = false;
+
     function draw() {
-      if (!W) { 
-        if (!isMobile) raf = requestAnimationFrame(draw); 
-        return; 
+      if (!isVisible || !W) {
+        return;
       }
       ctx.clearRect(0, 0, W, H);
 
@@ -115,15 +116,24 @@ function ParticleCanvas() {
         ctx.fill();
       });
 
+      const maxDistanceSq = maxDistance * maxDistance;
+
       for (let i = 0; i < pts.length; i++) {
+        const p1 = pts[i];
+        const p1x = p1.x * W;
+        const p1y = p1.y * H;
         for (let j = i + 1; j < pts.length; j++) {
-          const dx = (pts[i].x - pts[j].x) * W;
-          const dy = (pts[i].y - pts[j].y) * H;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < maxDistance) {
+          const p2 = pts[j];
+          const p2x = p2.x * W;
+          const p2y = p2.y * H;
+          const dx = p1x - p2x;
+          const dy = p1y - p2y;
+          const dsq = dx * dx + dy * dy;
+          if (dsq < maxDistanceSq) {
+            const d = Math.sqrt(dsq);
             ctx.beginPath();
-            ctx.moveTo(pts[i].x * W, pts[i].y * H);
-            ctx.lineTo(pts[j].x * W, pts[j].y * H);
+            ctx.moveTo(p1x, p1y);
+            ctx.lineTo(p2x, p2y);
             ctx.strokeStyle = `rgba(255,255,255,${0.04 * (1 - d / maxDistance)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
@@ -131,16 +141,46 @@ function ParticleCanvas() {
         }
       }
       
-      if (!isMobile) {
+      if (!isMobile && isVisible) {
         raf = requestAnimationFrame(draw);
       }
     }
 
     resize();
-    window.addEventListener("resize", resize);
-    raf = requestAnimationFrame(draw);
+    window.addEventListener("resize", resize, { passive: true });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting && !document.hidden;
+        if (isVisible && !isMobile) {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(draw);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(canvas);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        isVisible = false;
+        cancelAnimationFrame(raf);
+      } else if (canvasRef.current) {
+        isVisible = true;
+        if (!isMobile) {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(draw);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibility);
       if (!isMobile) cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };

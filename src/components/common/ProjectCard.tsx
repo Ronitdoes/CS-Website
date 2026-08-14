@@ -1,21 +1,26 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import Image from "next/image";
-import { Barlow_Condensed, Barlow } from 'next/font/google';
+import { Barlow_Condensed, Barlow } from "next/font/google";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 
-function progressToBg(t: number): string {
-  return "rgba(0,0,0,0)";
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 const barlowCondensed = Barlow_Condensed({
-  weight: ['700', '800'],
-  subsets: ['latin'],
+  weight: ["700", "800"],
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const barlow = Barlow({
-  weight: ['400', '500'],
-  subsets: ['latin'],
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  display: "swap",
 });
 
 interface CardProps {
@@ -52,7 +57,7 @@ const cards: CardProps[] = [
   },
 ];
 
-const ArrowIcon = () => (
+const ArrowIcon = React.memo(() => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -65,14 +70,37 @@ const ArrowIcon = () => (
     <line x1="5" y1="12" x2="19" y2="12" />
     <polyline points="12 5 19 12 12 19" />
   </svg>
-);
+));
+ArrowIcon.displayName = "ArrowIcon";
 
-const Card = ({ image, title, description, github }: CardProps) => {
+const Card = React.memo(({ image, title, description, github }: CardProps) => {
   const githubUrl = github ?? "https://github.com";
 
+  const letterSpans = useMemo(() => {
+    return title.split("").map((char, index) => (
+      <span
+        key={index}
+        className="inline-block relative transition-transform duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] will-change-transform"
+        style={{ transitionDelay: `${index * 30}ms` }}
+      >
+        <span className="inline-block transition-transform duration-[400ms] group-hover:-translate-y-full will-change-transform">
+          {char === " " ? "\u00A0" : char}
+        </span>
+        <span className="absolute left-0 top-full inline-block transition-transform duration-[400ms] group-hover:-translate-y-full text-white will-change-transform">
+          {char === " " ? "\u00A0" : char}
+        </span>
+      </span>
+    ));
+  }, [title]);
+
   return (
-    <div
-      className={`w-full h-full rounded-[7px] overflow-hidden bg-[#111] border border-[#222] shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative transition-colors duration-[250ms] ease-in hover:bg-[#F4A119] hover:border-[#F4A119] cursor-pointer group flex flex-col ${barlow.className}`}
+    <a
+      href={githubUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`View ${title} project on GitHub`}
+      className={`w-full h-full rounded-[7px] overflow-hidden bg-[#111] border border-[#222] shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative transition-colors duration-[250ms] ease-in hover:bg-[#F4A119] hover:border-[#F4A119] cursor-pointer group flex flex-col no-underline text-inherit ${barlow.className}`}
+      style={{ willChange: "background-color, border-color" }}
     >
       <div style={{ padding: "14px 14px 2px 14px" }} className="w-full">
         <div
@@ -83,6 +111,9 @@ const Card = ({ image, title, description, github }: CardProps) => {
             src={image}
             alt={title}
             fill
+            sizes="(max-width: 640px) 48vw, (max-width: 1024px) 240px, 280px"
+            loading="lazy"
+            decoding="async"
             className="object-cover object-top block transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -90,36 +121,24 @@ const Card = ({ image, title, description, github }: CardProps) => {
 
       <div style={{ padding: "14px" }} className="flex-1 flex flex-col">
         <div className="flex items-center justify-between mb-[10px]">
-          <h2
+          <h3
             className={`font-extrabold text-[30px] sm:text-[38px] tracking-[0.03em] uppercase text-white leading-none m-0 flex overflow-hidden ${barlowCondensed.className}`}
           >
-            {title.split("").map((char, index) => (
-              <span
-                key={index}
-                className="inline-block relative transition-transform duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)]"
-                style={{ transitionDelay: `${index * 30}ms` }}
-              >
-                <span className="inline-block transition-transform duration-[400ms] group-hover:-translate-y-full">
-                  {char === " " ? "\u00A0" : char}
-                </span>
-                <span className="absolute left-0 top-full inline-block transition-transform duration-[400ms] group-hover:-translate-y-full text-white">
-                  {char === " " ? "\u00A0" : char}
-                </span>
-              </span>
-            ))}
-          </h2>
+            {letterSpans}
+          </h3>
 
           <div className="flex items-center justify-center text-white shrink-0">
-            <a href={githubUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center justify-center">
-              <span className="inline-flex relative overflow-hidden items-center justify-center" style={{ transitionDelay: `${title.length * 30}ms` }}>
-                <span className="inline-flex transition-transform duration-[400ms] group-hover:-translate-y-full items-center justify-center">
-                  <ArrowIcon />
-                </span>
-                <span className="absolute left-0 top-full inline-flex transition-transform duration-[400ms] group-hover:-translate-y-full text-white items-center justify-center">
-                  <ArrowIcon />
-                </span>
+            <span
+              className="inline-flex relative overflow-hidden items-center justify-center will-change-transform"
+              style={{ transitionDelay: `${title.length * 30}ms` }}
+            >
+              <span className="inline-flex transition-transform duration-[400ms] group-hover:-translate-y-full items-center justify-center will-change-transform">
+                <ArrowIcon />
               </span>
-            </a>
+              <span className="absolute left-0 top-full inline-flex transition-transform duration-[400ms] group-hover:-translate-y-full text-white items-center justify-center will-change-transform">
+                <ArrowIcon />
+              </span>
+            </span>
           </div>
         </div>
 
@@ -127,175 +146,109 @@ const Card = ({ image, title, description, github }: CardProps) => {
           {description}
         </p>
       </div>
-    </div>
+    </a>
   );
-};
+});
+Card.displayName = "Card";
 
-const MobileGrid = ({ onProgress }: { onProgress: (p: number) => void }) => {
-  const sectionRef = useRef<HTMLElement>(null);
+const SectionHeader = React.memo(({ isVisible = true }: { isVisible?: boolean }) => (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      marginBottom: "2rem",
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? "translateY(0px)" : "translateY(40px)",
+      transition: "opacity 0.7s ease, transform 0.7s cubic-bezier(0.19, 1, 0.22, 1)",
+      willChange: "transform, opacity",
+    }}
+  >
+    <h2
+      style={{
+        textAlign: "center",
+        fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+        fontWeight: 900,
+        background: "linear-gradient(to right, #ffffff, #f9ba1f)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        fontSize: "clamp(2.75rem, 8vw, 5.25rem)",
+        lineHeight: 1.15,
+        paddingBottom: "0.15em",
+        letterSpacing: "-0.03em",
+        margin: 0,
+      }}
+    >
+      Our Projects
+    </h2>
+    <div
+      style={{
+        width: "32px",
+        height: "3px",
+        backgroundColor: "#ffffff",
+        boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
+        marginTop: "10px",
+        borderRadius: "999px",
+      }}
+    />
+  </div>
+));
+SectionHeader.displayName = "SectionHeader";
 
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    let rafId = 0;
-    const onScroll = () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = 0;
-        const rect = section.getBoundingClientRect();
-        const windowH = window.innerHeight;
-        const total = rect.height + windowH;
-        const scrolled = windowH - rect.top;
-        const progress = Math.min(1, Math.max(0, scrolled / total));
-        onProgress(progress);
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [onProgress]);
-
+const MobileGrid = React.memo(() => {
   return (
-    <section ref={sectionRef} className="w-full py-[40px] px-4">
-      <h2
-        style={{
-          textAlign: "center",
-          fontFamily: "'Playfair Display', serif",
-          fontWeight: 900,
-          background: "linear-gradient(to right, #ffffff, #f9ba1f)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          fontSize: "clamp(2.75rem, 8vw, 5.25rem)",
-          lineHeight: 1.15,
-          paddingBottom: "0.15em",
-          letterSpacing: "-0.03em",
-          marginBottom: "0px",
-        }}
-      >
-        Our Projects
-      </h2>
-      <div
-        style={{
-          width: "32px",
-          height: "3px",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
-          marginTop: "10px",
-          marginBottom: "2rem",
-          marginLeft: "auto",
-          marginRight: "auto",
-          borderRadius: "999px",
-        }}
-      />
+    <section className="w-full py-[clamp(3rem,8vh,5rem)] px-4">
+      <SectionHeader isVisible={true} />
       <div className="grid grid-cols-2 gap-[12px]">
-        {cards.map((card, index) => (
-          <div key={index} style={{ minHeight: "clamp(220px, 55vw, 340px)" }}>
+        {cards.map((card) => (
+          <div key={card.title} style={{ minHeight: "clamp(220px, 55vw, 340px)" }}>
             <Card {...card} />
           </div>
         ))}
       </div>
     </section>
   );
-};
+});
+MobileGrid.displayName = "MobileGrid";
 
-const DesktopScroll = ({ onProgress }: { onProgress: (p: number) => void }) => {
+const DesktopScroll = React.memo(() => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(0);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    let rafId = 0;
-    let lastCount = 0;
+  useGSAP(() => {
+    if (!containerRef.current) return;
 
-    const onScroll = () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = 0;
-        const rect = container.getBoundingClientRect();
-        const windowH = window.innerHeight;
-        const scrolled = -rect.top;
-        const totalScrollable = rect.height - windowH;
-
-        if (scrolled < 0) {
-          onProgress(0);
-          if (lastCount !== 0) {
-            lastCount = 0;
-            setVisibleCount(0);
-          }
-          return;
-        }
-
-        const clampedScrolled = Math.min(scrolled, totalScrollable);
-        const progress = clampedScrolled / totalScrollable;
-        onProgress(Math.min(1, Math.max(0, progress)));
-        const count = Math.min(cards.length, Math.floor(progress * cards.length) + 1);
-        if (count !== lastCount) {
-          lastCount = count;
-          setVisibleCount(count);
-        }
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 768px)", () => {
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const count =
+            progress < 0.04
+              ? 0
+              : Math.min(cards.length, Math.floor((progress - 0.04) / ((1 - 0.04) / cards.length)) + 1);
+          setVisibleCount((prev) => (prev === count ? prev : count));
+        },
       });
-    };
+    });
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [onProgress]);
+    return () => mm.revert();
+  }, { scope: containerRef });
 
   return (
     <div ref={containerRef} style={{ height: `${cards.length * 100}vh` }} className="relative">
       <div className="sticky top-0 w-full h-screen flex flex-col items-center justify-center px-4 md:px-8">
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            marginBottom: "2rem",
-            opacity: visibleCount > 0 ? 1 : 0,
-            transform: visibleCount > 0 ? "translateY(0px)" : "translateY(40px)",
-            transition: "opacity 0.7s ease, transform 0.7s cubic-bezier(0.19, 1, 0.22, 1)",
-          }}
-        >
-          <h2
-            style={{
-              textAlign: "center",
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 900,
-              background: "linear-gradient(to right, #ffffff, #f9ba1f)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontSize: "clamp(2.75rem, 8vw, 5.25rem)",
-              lineHeight: 1.15,
-              paddingBottom: "0.15em",
-              letterSpacing: "-0.03em",
-              margin: 0,
-            }}
-          >
-            Our Projects
-          </h2>
-          <div
-            style={{
-              width: "32px",
-              height: "3px",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
-              marginTop: "10px",
-              borderRadius: "999px",
-            }}
-          />
-        </div>
+        <SectionHeader isVisible={true} />
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-[20px]">
           {cards.map((card, index) => {
             const isVisible = index < visibleCount;
             return (
               <div
-                key={index}
+                key={card.title}
                 style={{
                   marginTop: index * 48,
                   width: 280,
@@ -303,6 +256,7 @@ const DesktopScroll = ({ onProgress }: { onProgress: (p: number) => void }) => {
                   transform: isVisible ? "translateY(0px)" : "translateY(80px)",
                   opacity: isVisible ? 1 : 0,
                   transition: "transform 0.75s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.6s ease",
+                  willChange: "transform, opacity",
                 }}
                 className="flex shrink-0"
               >
@@ -314,47 +268,21 @@ const DesktopScroll = ({ onProgress }: { onProgress: (p: number) => void }) => {
       </div>
     </div>
   );
-};
+});
+DesktopScroll.displayName = "DesktopScroll";
 
 const CascadingCards = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  // progressToBg always returns transparent, so no state needed.
-  // Using a no-op callback avoids setState during scroll entirely.
-  const handleProgress = useCallback((_progress: number) => {}, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const initialMatch = mq.matches;
-    const timer = setTimeout(() => {
-      setIsMobile(initialMatch);
-    }, 0);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => {
-      clearTimeout(timer);
-      mq.removeEventListener("change", handler);
-    };
-  }, []);
-
   return (
-    <div
-      className="mobile-projects-wrapper"
-      style={{
-        backgroundColor: 'transparent',
-      }}
-    >
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-projects-wrapper {
-            padding-top: clamp(3rem, 8vh, 5rem) !important;
-            padding-bottom: clamp(3rem, 8vh, 5rem) !important;
-          }
-        }
-      `}</style>
-      {isMobile
-        ? <MobileGrid onProgress={handleProgress} />
-        : <DesktopScroll onProgress={handleProgress} />}
+    <div className="w-full bg-transparent">
+      {/* Desktop view (>= 768px): Sticky cascade scroll sequence */}
+      <div className="hidden md:block">
+        <DesktopScroll />
+      </div>
+
+      {/* Mobile view (< 768px): Fast 2-column grid without layout shifts */}
+      <div className="block md:hidden">
+        <MobileGrid />
+      </div>
     </div>
   );
 };

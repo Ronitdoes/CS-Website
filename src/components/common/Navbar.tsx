@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import TopographicBackground from "@/components/LineBackground";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Menu } from "lucide-react";
 import style from "./Navbar.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 
 const NAV_IMAGES = [
@@ -44,8 +42,8 @@ function NorrisText({
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    const timerIn = setTimeout(() => setAnimate(true), 150);
-    const timerOut = setTimeout(() => setAnimate(false), 1650);
+    const timerIn = setTimeout(() => setAnimate(true), 120);
+    const timerOut = setTimeout(() => setAnimate(false), 1300);
 
     return () => {
       clearTimeout(timerIn);
@@ -138,7 +136,9 @@ export default function Navbar() {
 
   useEffect(() => {
     let rafId = 0;
-    
+    let scrolledState = false;
+    let scrollEndTimer: NodeJS.Timeout;
+
     const updateContrast = () => {
       const isLogoLight = checkLuminanceAtElement(logoRef.current);
       const isMenuLight = checkLuminanceAtElement(menuRef.current);
@@ -153,14 +153,21 @@ export default function Navbar() {
         rafId = 0;
         const scrollY = window.scrollY;
         const isScrolled = scrollY > 60;
-        setScrolled((prev) => (prev === isScrolled ? prev : isScrolled));
-        updateContrast();
+        if (isScrolled !== scrolledState) {
+          scrolledState = isScrolled;
+          setScrolled(isScrolled);
+        }
         
+        // Fast direct transform/opacity update without reflow
         if (logoRef.current) {
           const opacity = Math.max(0, 1 - scrollY / 150);
           logoRef.current.style.opacity = String(opacity);
           logoRef.current.style.pointerEvents = opacity === 0 ? "none" : "auto";
         }
+
+        // Defer expensive contrast hit-testing until scroll rests to avoid layout thrashing
+        clearTimeout(scrollEndTimer);
+        scrollEndTimer = setTimeout(updateContrast, 120);
       });
     };
 
@@ -180,6 +187,7 @@ export default function Navbar() {
       window.removeEventListener("resize", updateContrast);
       if (rafId) cancelAnimationFrame(rafId);
       clearTimeout(timer);
+      clearTimeout(scrollEndTimer);
     };
   }, [pathname]);
 
@@ -258,15 +266,6 @@ export default function Navbar() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className={style.overlay}
           >
-            <div className={style.overlayBg}>
-              <TopographicBackground
-                lineColor="rgba(180, 140, 60, 0.15)"
-                backgroundColor="#1a1d17"
-                lineCount={15}
-                animated={true}
-              />
-            </div>
-
             <div className={style.overlayContent}>
               <div className={style.gridSection}>
                 <div className={style.photoGrid}>

@@ -104,10 +104,11 @@ function VelocityText({
   parallaxStyle,
   scrollerStyle
 }: VelocityTextProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isVisibleRef = useRef(true);
   const baseX = useMotionValue(0);
 
   // Track the actual window scroll (page scroll) instead of the non-scrollable container ref.
-  // This eliminates layout thrashing/reflow on every scroll event and correctly measures velocity.
   const { scrollY } = useScroll();
   const scrollVelocity = useVelocity(scrollY);
   
@@ -126,8 +127,22 @@ function VelocityText({
   );
 
   const copyRef = useRef<HTMLSpanElement>(null);
-  // Use ref-based width measurement to prevent React re-renders during scroll
   const copyWidthRef = useElementWidthRef(copyRef);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const wrap = useCallback((min: number, max: number, v: number): number => {
     const range = max - min;
@@ -138,13 +153,15 @@ function VelocityText({
   const x = useTransform(baseX, v => {
     const w = copyWidthRef.current;
     if (w === 0) return '0px';
-    // Round to nearest pixel to prevent subpixel font rendering instability
-    // (large text at fractional pixel positions causes visible baseline jitter)
     return `${Math.round(wrap(-w, 0, v))}px`;
   });
 
   const directionFactor = useRef<number>(1);
   useAnimationFrame((t, delta) => {
+    if (!isVisibleRef.current || (typeof document !== "undefined" && document.hidden)) {
+      return;
+    }
+
     // Clamp frame delta to prevent massive jumps/glitches during lag spikes or tab switching
     const clampedDelta = Math.min(delta, 100);
     const rawVFactor = velocityFactor.get();
@@ -154,13 +171,11 @@ function VelocityText({
     let moveBy = directionFactor.current * baseVelocity * (clampedDelta / 1000);
 
     // Dead zone: prevent direction flipping when velocity is near zero
-    // (spring oscillation around 0 causes rapid reversals = visual stutter)
     if (vFactor < -0.05) {
       directionFactor.current = -1;
     } else if (vFactor > 0.05) {
       directionFactor.current = 1;
     }
-    // else: keep current direction (dead zone)
 
     moveBy += directionFactor.current * moveBy * vFactor;
     baseX.set(baseX.get() + moveBy);
@@ -176,7 +191,7 @@ function VelocityText({
   }
 
   return (
-    <div className={`${parallaxClassName || ''} relative overflow-hidden`} style={parallaxStyle}>
+    <div ref={containerRef} className={`${parallaxClassName || ''} relative overflow-hidden`} style={parallaxStyle}>
       <motion.div
         className={`${scrollerClassName || ''} flex whitespace-nowrap text-center font-sans text-2xl font-bold tracking-[-0.02em] antialiased sm:text-4xl md:text-[5rem] md:leading-[5rem]`}
         style={{ 

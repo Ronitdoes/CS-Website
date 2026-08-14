@@ -36,7 +36,8 @@ function HeroModel({ scrollContainerRef }: { scrollContainerRef?: React.RefObjec
   );
 }
 
-useGLTF.preload("/Hero.glb");
+// Preload removed to prevent 9MB bundle/network waste
+// useGLTF.preload("/Hero.glb");
 
 function IEEEModel() {
   const { scene } = useGLTF("");

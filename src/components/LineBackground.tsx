@@ -25,17 +25,25 @@ export default function TopographicBackground({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
     const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const isMobile = window.innerWidth < 768;
+      dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.25);
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     resize();
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", resize, { passive: true });
 
     const noise = (x: number, y: number, t: number): number => {
       return (
@@ -49,17 +57,19 @@ export default function TopographicBackground({
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     const activeLineCount = isMobile ? 4 : lineCount;
 
-    const W = () => canvas.offsetWidth;
-    const H = () => canvas.offsetHeight;
+    // Pre-allocated Float32Array for marching squares field
+    let field = new Float32Array(0);
 
     const drawContours = (t: number) => {
-      const w = W();
-      const h = H();
+      const w = width;
+      const h = height;
+      if (w === 0 || h === 0) return;
 
-      ctx.clearRect(0, 0, w, h);
       if (backgroundColor !== "transparent") {
-          ctx.fillStyle = backgroundColor;
-          ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, w, h);
+      } else {
+        ctx.clearRect(0, 0, w, h);
       }
 
       ctx.strokeStyle = lineColor;
@@ -67,24 +77,27 @@ export default function TopographicBackground({
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      // Create a responsive grid so the topographic lines are never stretched
+      // Responsive grid
       const maxDim = Math.max(w, h);
-      const cellSize = Math.max(20, maxDim / 100); 
-      
+      const cellSize = Math.max(isMobile ? 28 : 22, maxDim / (isMobile ? 60 : 90));
+
       const cols = Math.ceil(w / cellSize);
       const rows = Math.ceil(h / cellSize);
       const cellW = w / cols;
       const cellH = h / rows;
 
-      const field: number[][] = [];
+      const totalGridPoints = (rows + 1) * (cols + 1);
+      if (field.length < totalGridPoints) {
+        field = new Float32Array(totalGridPoints);
+      }
+
+      const rowStride = cols + 1;
       for (let j = 0; j <= rows; j++) {
-        field[j] = [];
+        const rowOffset = j * rowStride;
+        const ny = (j * cellH) / 250;
         for (let i = 0; i <= cols; i++) {
-          // Base the noise coordinates on the physical screen size 
-          // so the noise scale remains constantly proportioned
           const nx = (i * cellW) / 250;
-          const ny = (j * cellH) / 250;
-          field[j][i] = noise(nx, ny, t);
+          field[rowOffset + i] = noise(nx, ny, t);
         }
       }
 
@@ -97,19 +110,16 @@ export default function TopographicBackground({
         ctx.beginPath();
 
         for (let j = 0; j < rows; j++) {
+          const r0 = j * rowStride;
+          const r1 = (j + 1) * rowStride;
+          const y0 = j * cellH;
+          const y1 = y0 + cellH;
+
           for (let i = 0; i < cols; i++) {
-            const v00 = field[j][i];
-            const v10 = field[j][i + 1];
-            const v01 = field[j + 1][i];
-            const v11 = field[j + 1][i + 1];
-
-            const x0 = i * cellW;
-            const y0 = j * cellH;
-            const x1 = x0 + cellW;
-            const y1 = y0 + cellH;
-
-            const lerp = (a: number, b: number, va: number, vb: number) =>
-              a + ((b - a) * (threshold - va)) / (vb - va);
+            const v00 = field[r0 + i];
+            const v10 = field[r0 + i + 1];
+            const v01 = field[r1 + i];
+            const v11 = field[r1 + i + 1];
 
             const idx =
               (v00 > threshold ? 8 : 0) |
@@ -119,52 +129,127 @@ export default function TopographicBackground({
 
             if (idx === 0 || idx === 15) continue;
 
-            const top = { x: lerp(x0, x1, v00, v10), y: y0 };
-            const right = { x: x1, y: lerp(y0, y1, v10, v11) };
-            const bottom = { x: lerp(x0, x1, v01, v11), y: y1 };
-            const left = { x: x0, y: lerp(y0, y1, v00, v01) };
+            const x0 = i * cellW;
+            const x1 = x0 + cellW;
 
-            const segments: Array<[{ x: number; y: number }, { x: number; y: number }]> = [];
+            const topX = x0 + ((x1 - x0) * (threshold - v00)) / (v10 - v00);
+            const bottomX = x0 + ((x1 - x0) * (threshold - v01)) / (v11 - v01);
+            const leftY = y0 + ((y1 - y0) * (threshold - v00)) / (v01 - v00);
+            const rightY = y0 + ((y1 - y0) * (threshold - v10)) / (v11 - v10);
 
             switch (idx) {
-              case 1:  segments.push([bottom, left]); break;
-              case 2:  segments.push([right, bottom]); break;
-              case 3:  segments.push([right, left]); break;
-              case 4:  segments.push([top, right]); break;
-              case 5:  segments.push([top, left]); segments.push([right, bottom]); break;
-              case 6:  segments.push([top, bottom]); break;
-              case 7:  segments.push([top, left]); break;
-              case 8:  segments.push([left, top]); break;
-              case 9:  segments.push([bottom, top]); break;
-              case 10: segments.push([left, bottom]); segments.push([top, right]); break;
-              case 11: segments.push([right, top]); break;
-              case 12: segments.push([left, right]); break;
-              case 13: segments.push([bottom, right]); break;
-              case 14: segments.push([left, bottom]); break;
-            }
-
-            for (const [from, to] of segments) {
-              ctx.moveTo(from.x, from.y);
-              ctx.lineTo(to.x, to.y);
+              case 1:
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(x0, leftY);
+                break;
+              case 2:
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(bottomX, y1);
+                break;
+              case 3:
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(x0, leftY);
+                break;
+              case 4:
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x1, rightY);
+                break;
+              case 5:
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x0, leftY);
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(bottomX, y1);
+                break;
+              case 6:
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(bottomX, y1);
+                break;
+              case 7:
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x0, leftY);
+                break;
+              case 8:
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(topX, y0);
+                break;
+              case 9:
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(topX, y0);
+                break;
+              case 10:
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(bottomX, y1);
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x1, rightY);
+                break;
+              case 11:
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(topX, y0);
+                break;
+              case 12:
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(x1, rightY);
+                break;
+              case 13:
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(x1, rightY);
+                break;
+              case 14:
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(bottomX, y1);
+                break;
             }
           }
         }
 
         ctx.stroke();
-        ctx.beginPath();
       }
     };
 
-    const animate = () => {
-      timeRef.current += animated ? 0.04 : 0;
+    let isVisible = true;
+    let isRunning = false;
+    let lastTime = 0;
+
+    const animate = (now: number) => {
+      if (!isVisible) {
+        isRunning = false;
+        lastTime = 0;
+        return;
+      }
+
+      if (lastTime === 0) lastTime = now;
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      timeRef.current += animated ? delta * 2.6 : 0;
       drawContours(timeRef.current);
+
       animFrameRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isVisible = false;
+        cancelAnimationFrame(animFrameRef.current);
+        isRunning = false;
+        lastTime = 0;
+      } else {
+        isVisible = true;
+        if (!isRunning) {
+          isRunning = true;
+          lastTime = 0;
+          animFrameRef.current = requestAnimationFrame(animate);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    isRunning = true;
+    animFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       cancelAnimationFrame(animFrameRef.current);
     };
   }, [lineColor, backgroundColor, lineCount, animated]);

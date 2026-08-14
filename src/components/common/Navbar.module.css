@@ -77,18 +77,11 @@
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: #2b2722;
+    background: #21211b;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-}
-
-.overlayBg {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    opacity: 0.6;
 }
 
 .overlayContent {
@@ -194,13 +187,13 @@
     position: absolute;
     left: 0;
     color: #f5f5dc;
-    transition: all ease-out 400ms;
-    transition-delay: calc(var(--char-index) * 35ms);
+    transition: all ease-out 300ms;
+    transition-delay: calc(var(--char-index) * 24ms);
 }
 
 .norrisWrapper.animate .norrisChar::before,
 .norrisWrapper.animate .norrisChar::after {
-    transition-delay: calc((var(--char-index) + var(--line-index) * 2) * 35ms);
+    transition-delay: calc((var(--char-index) + var(--line-index) * 1.6) * 24ms);
 }
 
 .norrisChar::before {

@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import FadishBlackBackground from "@/components/FadishBlackBackground";
-import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
 import styles from "./about.module.css";
 
 const LogoScrollWrapper = dynamic(
@@ -17,7 +16,7 @@ const ChairpersonSection = dynamic(
 
 export default function AboutPage() {
   return (
-    <SmoothScrollProvider>
+    <>
       <div className="fixed inset-0 -z-10">
         <FadishBlackBackground />
       </div>
@@ -111,6 +110,6 @@ export default function AboutPage() {
       <ChairpersonSection />
 
       <LogoScrollWrapper />
-    </SmoothScrollProvider>
+    </>
   );
 }

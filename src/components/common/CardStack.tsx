@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import styles from "@/components/common/CardStack.module.css";
-import { motion } from "framer-motion";
 
-const images = [
+export const EVENT_IMAGES = [
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1781931822598_b2n7xi.avif",
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1781932593544_yg7km7.avif",
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1781890098603_s975e.avif",
@@ -18,7 +17,19 @@ export default function CardStack() {
   const containerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    EVENT_IMAGES.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+      if (typeof img.decode === "function") {
+        img.decode().catch(() => {});
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
+    const target = containerRef.current;
+    if (!target) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -26,16 +37,13 @@ export default function CardStack() {
           timer = setTimeout(() => {
             setOpen(true);
           }, 500);
-
           observer.disconnect();
         }
       },
       { threshold: 0.4 }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+    observer.observe(target);
 
     return () => {
       observer.disconnect();
@@ -57,59 +65,51 @@ export default function CardStack() {
           }
         }
       `}</style>
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-10% 0px" }}
+      <div
         className="mobile-events-title-container w-full flex flex-col items-center"
         style={{
           paddingTop: "3rem",
           marginBottom: "1rem",
         }}
       >
-          <h2 style={{
-            display: "inline-block",
-            textAlign: "center",
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 900,
-            background: "linear-gradient(to right, #ffffff, #f9ba1f)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            fontSize: "clamp(2.75rem, 8vw, 5.25rem)",
-            lineHeight: 1.15,
-            padding: "0px 0px 0.15em 0px",
-            letterSpacing: "-0.03em",
-            margin: 0,
-          }}>
-            Our Events
-          </h2>
-          <div
-            style={{
-              width: "32px",
-              height: "3px",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
-              marginTop: "10px",
-              borderRadius: "999px",
-            }}
-          />
-      </motion.div>
+        <h2 style={{
+          display: "inline-block",
+          textAlign: "center",
+          fontFamily: "'Playfair Display', serif",
+          fontWeight: 900,
+          background: "linear-gradient(to right, #ffffff, #f9ba1f)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontSize: "clamp(2.75rem, 8vw, 5.25rem)",
+          lineHeight: 1.15,
+          padding: "0px 0px 0.15em 0px",
+          letterSpacing: "-0.03em",
+          margin: 0,
+        }}>
+          Our Events
+        </h2>
+        <div
+          style={{
+            width: "32px",
+            height: "3px",
+            backgroundColor: "#ffffff",
+            boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
+            marginTop: "10px",
+            borderRadius: "999px",
+          }}
+        />
+      </div>
       <section ref={containerRef} className={`${styles.container} mobile-events-cards-section`} style={{ minHeight: "100vh", paddingBottom: "10rem", paddingTop: "4rem" }}>
         <div className={`${styles.cards} ${open ? styles.open : ""}`}>
-          {images.map((src, index) => (
+          {EVENT_IMAGES.map((src, index) => (
             <div key={index} className={styles.card}>
               <img
                 src={src}
-                alt={`card-${index}`}
+                alt={`IEEE CS Event Card ${index + 1}`}
                 draggable="false"
                 loading="eager"
                 decoding="async"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
+                className={styles.cardImg}
               />
             </div>
           ))}

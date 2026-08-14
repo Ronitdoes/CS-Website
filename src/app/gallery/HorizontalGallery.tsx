@@ -106,24 +106,26 @@ export default function HorizontalGallery() {
       });
     });
 
-    // Mobile specific animations if any
+    // Mobile specific animations: batch ScrollTriggers to minimize observer overhead
     mm.add("(max-width: 767px)", () => {
-      const items = gsap.utils.toArray<HTMLElement>('.skill-set > div:not(.no-gsap)', wrapper.current);
-
-      items.forEach((item) => {
-        gsap.fromTo(item,
-          { y: 50, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            scrollTrigger: {
-              trigger: item,
-              start: "top 95%",
-              toggleActions: "play none none none"
+      ScrollTrigger.batch('.skill-set > div:not(.no-gsap)', {
+        interval: 0.1,
+        batchMax: 3,
+        start: "top 95%",
+        onEnter: (batch) => {
+          gsap.fromTo(
+            batch,
+            { y: 40, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.7,
+              stagger: 0.1,
+              ease: "power2.out",
+              overwrite: "auto",
             }
-          }
-        );
+          );
+        },
       });
     });
 
@@ -320,7 +322,6 @@ export default function HorizontalGallery() {
               fill
               className="z-0 translate-y-6 md:translate-y-0 object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -343,7 +344,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -366,7 +366,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
-              priority
             />
           </div>
 
@@ -412,7 +411,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -435,7 +433,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -458,7 +455,6 @@ export default function HorizontalGallery() {
               fill
               className="z-0 object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -481,7 +477,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -504,7 +499,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
 
@@ -529,7 +523,6 @@ export default function HorizontalGallery() {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 70vw"
-              priority
             />
           </div>
         </section>

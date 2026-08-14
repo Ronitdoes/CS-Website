@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useProgress, useGLTF, useEnvironment } from "@react-three/drei";
 import { usePathname } from "next/navigation";
+import { EVENT_IMAGES } from "@/components/common/CardStack";
 
 // Eagerly preload critical 3D assets at application startup.
 // These are tracked by R3F's useProgress() and block the preloader until loaded.
@@ -23,6 +24,17 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [lastPathname, setLastPathname] = useState(pathname);
   const isFirstRender = useRef(true);
+
+  // Eagerly preload and decode "Our Events" card images in background thread
+  useEffect(() => {
+    EVENT_IMAGES.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+      if (typeof img.decode === "function") {
+        img.decode().catch(() => {});
+      }
+    });
+  }, []);
 
   const [isVideoFinished, setVideoFinished] = useState(() => {
     if (typeof window !== "undefined") {
@@ -45,9 +57,17 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       const timer = setTimeout(() => {
         hasEverLoaded.current = true;
         setAssetsLoaded(true);
-      }, 500);
+      }, 300);
       return () => clearTimeout(timer);
     }
+
+    // Safety timeout: ensure page becomes interactive even on slow/blocked network
+    const fallbackTimer = setTimeout(() => {
+      hasEverLoaded.current = true;
+      setAssetsLoaded(true);
+    }, 2500);
+
+    return () => clearTimeout(fallbackTimer);
   }, [progress, active]);
   
   useEffect(() => {

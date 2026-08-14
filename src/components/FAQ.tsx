@@ -75,7 +75,7 @@ function AccordionItem({
             color: isOpen ? "#0f0f0f" : "#6b6b6b",
             lineHeight: 1.4,
             transition: "color 0.2s ease",
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
           }}
         >
           {faq.question}
@@ -134,7 +134,7 @@ function AccordionItem({
                 fontSize: 14,
                 color: "#71717a",
                 lineHeight: 1.75,
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
               }}
             >
               {faq.answer}
@@ -152,7 +152,6 @@ export default function FAQ() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=DM+Sans:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
 
         .faq-section {
@@ -162,7 +161,7 @@ export default function FAQ() {
           justify-content: center;
           padding: 96px 80px;
           min-height: 100vh;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
         }
 
         .faq-inner {
@@ -181,7 +180,7 @@ export default function FAQ() {
         }
 
         .faq-heading {
-          font-family: 'Playfair Display', serif;
+          font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
           font-size: 84px;
           font-weight: 900;
           background: linear-gradient(to right, #ffffff, #f9ba1f);

@@ -117,6 +117,8 @@ const Card = () => {
                 <img
                   src={edition.image}
                   alt={edition.title}
+                  loading="lazy"
+                  decoding="async"
                   className="glass-image"
                 />
               </div>
