@@ -158,6 +158,7 @@ export default function HorizontalGallery() {
             gap: 5.5rem !important;
             padding: 4rem 1.5rem !important;
             height: auto !important;
+            width: 100% !important;
           }
           .gallery-badge-wrapper {
             position: absolute !important;
@@ -168,6 +169,21 @@ export default function HorizontalGallery() {
             margin-bottom: 0 !important;
             display: flex !important;
             z-index: 30 !important;
+          }
+          .gallery-item-left {
+            align-self: flex-start !important;
+            margin-left: 0 !important;
+            margin-right: auto !important;
+          }
+          .gallery-item-right {
+            align-self: flex-end !important;
+            margin-left: auto !important;
+            margin-right: 0 !important;
+          }
+          .gallery-item-center {
+            align-self: center !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
           }
         }
       `}</style>
@@ -180,7 +196,7 @@ export default function HorizontalGallery() {
         <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20">
           
           {/* Item 1 */}
-          <div className="gallery-item-card gallery-item-1 relative md:absolute md:right-[600px] md:top-[150px] w-[65%] md:w-[25vw] h-[38vh] md:h-[35vh] mx-auto md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1">
+          <div className="gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[68%] md:w-[25vw] h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-0 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start md:justify-end"
@@ -208,7 +224,7 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 2 */}
-          <div className="gallery-item-card gallery-item-2 relative md:absolute md:right-[600px] md:bottom-[120px] w-[65%] md:w-[15vw] h-[34vh] md:h-[20vh] mr-auto ml-0 my-0 max-md:order-9">
+          <div className="gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[68%] md:w-[15vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 mr-auto ml-0 my-0 max-md:order-9">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start"
@@ -236,7 +252,7 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 3 */}
-          <div className="gallery-item-card gallery-item-3 relative md:absolute md:right-[0px] md:bottom-[120px] w-[78%] md:w-[28vw] h-[42vh] md:h-[45vh] mr-auto ml-0 my-0 md:ml-auto md:mr-0 max-md:order-3">
+          <div className="gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[75%] md:w-[28vw] h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 md:ml-auto md:mr-0 max-md:order-3">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start"
@@ -264,7 +280,7 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Text 1 */}
-          <div className="gallery-item-text-1 relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-4 md:my-0 max-md:order-4">
+          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-4 md:my-0 max-md:order-4 max-md:self-center">
             <motion.div
               variants={textContainerVariants}
               initial="hidden"
@@ -289,7 +305,7 @@ export default function HorizontalGallery() {
         <section className="skill-set relative w-full md:w-screen h-auto md:h-full flex flex-col md:items-center md:justify-center px-6 md:px-12 pt-0 pb-[clamp(2rem,5vh,4rem)] md:py-0 gap-32 md:gap-20">
           
           {/* Item 4 */}
-          <div className="gallery-item-card gallery-item-4 relative md:absolute md:left-[100px] md:top-[150px] w-[60%] md:w-[18vw] h-[34vh] md:h-[18vh] mr-auto ml-0 my-0 max-md:order-6">
+          <div className="gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[68%] md:w-[18vw] h-[34vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 max-md:order-6">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start"
@@ -317,10 +333,10 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 5 */}
-          <div className="gallery-item-card gallery-item-5 relative md:absolute md:left-[180px] md:bottom-[180px] w-[65%] md:w-[27vw] h-[38vh] md:h-[27vh] ml-auto mr-0 my-0 max-md:order-5">
+          <div className="gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[68%] md:w-[27vw] h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-5">
             <div className="gallery-badge-wrapper">
               <BoxReveal
-                align="justify-end"
+                align="justify-start md:justify-end"
                 className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
                 widthClass="w-fit"
                 marginClass="my-0"
@@ -345,7 +361,7 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 6 */}
-          <div className="gallery-item-card gallery-item-6 relative md:absolute md:left-[670px] md:bottom-[80px] w-[70%] md:w-[25vw] h-[36vh] md:h-auto md:aspect-[16/9] mx-auto md:mr-auto md:ml-0 my-0 max-md:order-7">
+          <div className="gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[72%] md:w-[25vw] h-[36vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-0 mx-auto md:mr-auto md:ml-0 my-0 max-md:order-7">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start"
@@ -373,10 +389,10 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 7 */}
-          <div className="gallery-item-card gallery-item-7 relative md:absolute md:right-[720px] md:top-[180px] w-[60%] md:w-[20vw] h-[34vh] md:h-[20vh] ml-auto mr-0 my-0 max-md:order-2">
+          <div className="gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[68%] md:w-[20vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-2">
             <div className="gallery-badge-wrapper">
               <BoxReveal
-                align="justify-end"
+                align="justify-start md:justify-end"
                 className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
                 widthClass="w-fit"
                 marginClass="my-0"
@@ -401,10 +417,10 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 8 */}
-          <div className="gallery-item-card gallery-item-8 relative md:absolute md:right-[200px] md:top-[150px] w-[75%] md:w-[30vw] h-[40vh] md:h-auto md:aspect-[16/9] ml-auto mr-0 my-0 md:mr-auto md:ml-0 max-md:order-8">
+          <div className="gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[75%] md:w-[30vw] h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-0 ml-auto mr-0 my-0 md:mr-auto md:ml-0 max-md:order-8">
             <div className="gallery-badge-wrapper">
               <BoxReveal
-                align="justify-end"
+                align="justify-start md:justify-end"
                 className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
                 widthClass="w-fit"
                 marginClass="my-0"
@@ -429,7 +445,7 @@ export default function HorizontalGallery() {
           </div>
 
           {/* Item 9 */}
-          <div className="gallery-item-card gallery-item-9 relative md:absolute md:right-[40px] md:bottom-[130px] w-[70%] md:w-[14vw] h-[36vh] md:h-[25vh] mx-auto md:mx-0 max-md:order-11">
+          <div className="gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[70%] md:w-[14vw] h-[36vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-0 mx-auto md:mx-0 max-md:order-11">
             <div className="gallery-badge-wrapper">
               <BoxReveal
                 align="justify-start"
