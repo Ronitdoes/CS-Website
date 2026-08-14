@@ -8,6 +8,10 @@ import { useGSAP } from "@gsap/react";
 import { motion } from 'framer-motion';
 import BoxReveal from '@/components/common/BoxReveal';
 
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
 export const HORIZONTAL_GALLERY_IMAGES = [
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560566447_akr6jp.avif",
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560022208_0qc8i9.avif",
@@ -20,6 +24,115 @@ export const HORIZONTAL_GALLERY_IMAGES = [
   "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571207688_kxib06.webp",
 ];
 
+interface GalleryCardData {
+  id: number;
+  title: string;
+  image: string;
+  cardClassName: string;
+  badgeAlign: string;
+  badgeClassName: string;
+  sizes: string;
+  imageClassName?: string;
+  priority?: boolean;
+}
+
+const SECTION_1_ITEMS: GalleryCardData[] = [
+  {
+    id: 1,
+    title: "WE ARE IEEE",
+    image: HORIZONTAL_GALLERY_IMAGES[0],
+    cardClassName: "gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[68%] md:w-[25vw] h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-0 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
+    priority: true,
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "z-0 object-cover select-none",
+  },
+  {
+    id: 2,
+    title: "VENOM, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[1],
+    cardClassName: "gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[68%] md:w-[15vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 mr-auto ml-0 my-0 max-md:order-9",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 3,
+    title: "HACKERZ STREET 4.0, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[2],
+    cardClassName: "gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[75%] md:w-[28vw] h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 md:ml-auto md:mr-0 max-md:order-3",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 90vw, 50vw",
+    imageClassName: "object-cover select-none",
+  },
+];
+
+const SECTION_2_ITEMS: GalleryCardData[] = [
+  {
+    id: 4,
+    title: "HACKERZ STREET 4.0, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[3],
+    cardClassName: "gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[68%] md:w-[18vw] h-[34vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 max-md:order-6",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 5,
+    title: "Social Outreach, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[4],
+    cardClassName: "gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[68%] md:w-[27vw] h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-5",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 6,
+    title: "GENESIS 5.0, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[5],
+    cardClassName: "gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[72%] md:w-[25vw] h-[36vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-0 mx-auto md:mr-auto md:ml-0 my-0 max-md:order-7",
+    badgeAlign: "justify-start",
+    badgeClassName: "-translate-y-6 md:translate-y-[-25px] md:absolute mb-2 z-20",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "z-0 object-cover select-none",
+  },
+  {
+    id: 7,
+    title: "Night Perm",
+    image: HORIZONTAL_GALLERY_IMAGES[6],
+    cardClassName: "gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[68%] md:w-[20vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-2",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 8,
+    title: "IEEE CS, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[7],
+    cardClassName: "gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[75%] md:w-[30vw] h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-0 ml-auto mr-0 my-0 md:mr-auto md:ml-0 max-md:order-8",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 9,
+    title: "IEEE CCs SUMMIT, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[8],
+    cardClassName: "gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[70%] md:w-[14vw] h-[36vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-0 mx-auto md:mx-0 max-md:order-11",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 90vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+];
+
 const textContainerVariants = {
   hidden: {},
   visible: {
@@ -30,6 +143,40 @@ const textContainerVariants = {
   },
 };
 
+const GalleryCardItem = React.memo(function GalleryCardItem({ item }: { item: GalleryCardData }) {
+  return (
+    <div className={item.cardClassName}>
+      <div className="gallery-badge-wrapper max-md:absolute max-md:bottom-[calc(100%+0.35rem)] max-md:left-0 max-md:w-auto max-md:max-w-full max-md:mb-0 max-md:flex max-md:z-30">
+        <BoxReveal
+          align={item.badgeAlign}
+          className={item.badgeClassName}
+          widthClass="w-fit"
+          marginClass="my-0"
+          paddingClass="p-0"
+          boxColor="#f9ba1f"
+          duration={2.5}
+          standalone={true}
+        >
+          <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">{item.title}</p>
+        </BoxReveal>
+      </div>
+      <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
+        <Image
+          src={item.image}
+          alt={item.title}
+          fill
+          priority={item.priority}
+          loading={item.priority ? undefined : "lazy"}
+          decoding="async"
+          draggable={false}
+          className={item.imageClassName || "object-cover select-none"}
+          sizes={item.sizes}
+        />
+      </div>
+    </div>
+  );
+});
+
 export default function HorizontalGallery() {
   const scroller = useRef<HTMLDivElement | null>(null);
   const wrapper = useRef<HTMLDivElement | null>(null);
@@ -39,14 +186,29 @@ export default function HorizontalGallery() {
 
     const mm = gsap.matchMedia();
 
-    // Desktop: Seamless Synchronized Horizontal Pinned Scroll
+    // Desktop: Seamless Synchronized Horizontal Pinned Scroll with Enhanced Depth
     mm.add("(min-width: 768px)", () => {
+      const SCROLL_DEPTH_MULTIPLIER = 1.85;
+
       const getScrollDistance = () => {
         if (!scroller.current) return 0;
         return scroller.current.scrollWidth - window.innerWidth;
       };
 
-      // 1. Unified Master Pin + Horizontal Translation Timeline
+      const section1Cards = gsap.utils.toArray<HTMLElement>(
+        '.skill-set:nth-child(1) > .gallery-item-card',
+        wrapper.current
+      );
+      const section2Cards = gsap.utils.toArray<HTMLElement>(
+        '.skill-set:nth-child(2) > .gallery-item-card',
+        wrapper.current
+      );
+
+      // Initial offscreen positions with GPU compositing
+      gsap.set(section1Cards, { y: 120, x: 60, opacity: 0, force3D: true });
+      gsap.set(section2Cards, { y: 120, x: 60, opacity: 0, force3D: true });
+
+      // 1. Unified Master Pin + Horizontal Translation Timeline with Extended Scroll Depth
       const masterTl = gsap.timeline({
         scrollTrigger: {
           trigger: scroller.current,
@@ -55,29 +217,43 @@ export default function HorizontalGallery() {
           invalidateOnRefresh: true,
           anticipatePin: 1,
           start: "top top",
-          end: () => `+=${getScrollDistance()}`,
+          end: () => `+=${getScrollDistance() * SCROLL_DEPTH_MULTIPLIER}`,
           id: "gallery-master",
         },
       });
 
-      masterTl.to(scroller.current, {
-        x: () => -getScrollDistance(),
-        ease: "none",
-      });
+      // Master horizontal canvas translation
+      masterTl.to(
+        scroller.current,
+        {
+          x: () => -getScrollDistance(),
+          ease: "none",
+          duration: 1,
+        },
+        0
+      );
+
+      // Section 2 Cards entrance cleanly synchronized with scroll progress
+      masterTl.to(
+        section2Cards,
+        {
+          y: 0,
+          x: 0,
+          opacity: 1,
+          ease: "power2.out",
+          stagger: 0.05,
+          duration: 0.8,
+        },
+        0
+      );
 
       // 2. Section 1 Items Fade & Slide-in (triggers on approach)
-      const section1Items = gsap.utils.toArray<HTMLElement>(
-        '.skill-set:nth-child(1) > .gallery-item-card',
-        wrapper.current
-      );
-      gsap.set(section1Items, { y: 120, x: 60, opacity: 0 });
-
       ScrollTrigger.create({
         trigger: scroller.current,
         start: 'top 85%',
         once: true,
         onEnter: () => {
-          gsap.to(section1Items, {
+          gsap.to(section1Cards, {
             y: 0,
             x: 0,
             opacity: 1,
@@ -88,28 +264,6 @@ export default function HorizontalGallery() {
         },
         id: "gallery-fade-in-1",
       });
-
-      // 3. Section 2 Items Scrub Transition (synchronized with pin start)
-      const section2Items = gsap.utils.toArray<HTMLElement>(
-        '.skill-set:nth-child(2) > .gallery-item-card',
-        wrapper.current
-      );
-      gsap.set(section2Items, { y: 120, x: 60, opacity: 0 });
-
-      ScrollTrigger.create({
-        trigger: scroller.current,
-        scrub: 0.8,
-        start: 'top top',
-        end: () => `+=${getScrollDistance()}`,
-        animation: gsap.to(section2Items, {
-          y: 0,
-          x: 0,
-          opacity: 1,
-          ease: 'power2.out',
-          stagger: 0.05,
-        }),
-        id: "gallery-scrub-2",
-      });
     });
 
     // Mobile: Batched Single-Pass Entrance Triggers for ultra-smooth 60fps scrolling
@@ -119,7 +273,7 @@ export default function HorizontalGallery() {
         wrapper.current
       );
 
-      gsap.set(mobileItems, { y: 28, opacity: 0 });
+      gsap.set(mobileItems, { y: 28, opacity: 0, force3D: true });
 
       ScrollTrigger.batch(mobileItems, {
         start: "top 92%",
@@ -131,6 +285,7 @@ export default function HorizontalGallery() {
             duration: 0.65,
             stagger: 0.08,
             ease: "power2.out",
+            force3D: true,
             clearProps: "transform,opacity",
           });
         },
@@ -147,140 +302,18 @@ export default function HorizontalGallery() {
       ref={wrapper}
       className="overflow-hidden transition-colors duration-500"
     >
-      <style>{`
-        @media (max-width: 767px) {
-          .skill-set {
-            display: contents !important;
-          }
-          .gallery-scroller-canvas {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 5.5rem !important;
-            padding: 4rem 1.5rem !important;
-            height: auto !important;
-            width: 100% !important;
-          }
-          .gallery-badge-wrapper {
-            position: absolute !important;
-            bottom: calc(100% + 0.35rem) !important;
-            left: 0 !important;
-            width: auto !important;
-            max-width: 100% !important;
-            margin-bottom: 0 !important;
-            display: flex !important;
-            z-index: 30 !important;
-          }
-          .gallery-item-left {
-            align-self: flex-start !important;
-            margin-left: 0 !important;
-            margin-right: auto !important;
-          }
-          .gallery-item-right {
-            align-self: flex-end !important;
-            margin-left: auto !important;
-            margin-right: 0 !important;
-          }
-          .gallery-item-center {
-            align-self: center !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-          }
-        }
-      `}</style>
       <div
         ref={scroller}
-        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent will-change-transform"
+        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[5.5rem] max-md:py-16 max-md:px-6 max-md:h-auto max-md:w-full md:will-change-transform"
       >
-
         {/* SECTION 1 */}
-        <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20">
-          
-          {/* Item 1 */}
-          <div className="gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[68%] md:w-[25vw] h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-0 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start md:justify-end"
-                className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">WE ARE IEEE</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[0]}
-                alt="WE ARE IEEE"
-                fill
-                priority
-                className="z-0 object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 2 */}
-          <div className="gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[68%] md:w-[15vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 mr-auto ml-0 my-0 max-md:order-9">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start"
-                className="md:translate-y-[-25px] md:absolute mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">VENOM, 2026</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[1]}
-                alt="VENOM, 2026"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 3 */}
-          <div className="gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[75%] md:w-[28vw] h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 md:ml-auto md:mr-0 max-md:order-3">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start"
-                className="md:translate-y-[-25px] md:absolute mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">HACKERZ STREET 4.0, 2026</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[2]}
-                alt="HACKERZ STREET 4.0, 2026"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 50vw"
-              />
-            </div>
-          </div>
+        <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20 max-md:contents">
+          {SECTION_1_ITEMS.map((item) => (
+            <GalleryCardItem key={item.id} item={item} />
+          ))}
 
           {/* Text 1 */}
-          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-4 md:my-0 max-md:order-4 max-md:self-center">
+          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-4 md:my-0 max-md:order-4 max-md:self-center max-md:mx-auto">
             <motion.div
               variants={textContainerVariants}
               initial="hidden"
@@ -302,178 +335,11 @@ export default function HorizontalGallery() {
         </section>
 
         {/* SECTION 2 */}
-        <section className="skill-set relative w-full md:w-screen h-auto md:h-full flex flex-col md:items-center md:justify-center px-6 md:px-12 pt-0 pb-[clamp(2rem,5vh,4rem)] md:py-0 gap-32 md:gap-20">
-          
-          {/* Item 4 */}
-          <div className="gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[68%] md:w-[18vw] h-[34vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 max-md:order-6">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start"
-                className="md:translate-y-[-25px] md:absolute mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">HACKERZ STREET 4.0, 2026</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[3]}
-                alt="HACKERZ STREET 4.0, 2026"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 5 */}
-          <div className="gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[68%] md:w-[27vw] h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-5">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start md:justify-end"
-                className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">Social Outreach, 2025</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[4]}
-                alt="Social Outreach, 2025"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 6 */}
-          <div className="gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[72%] md:w-[25vw] h-[36vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-0 mx-auto md:mr-auto md:ml-0 my-0 max-md:order-7">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start"
-                className="-translate-y-6 md:translate-y-[-25px] md:absolute mb-2 z-20"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">GENESIS 5.0, 2025</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[5]}
-                alt="GENESIS 5.0, 2025"
-                fill
-                decoding="async"
-                className="z-0 object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 7 */}
-          <div className="gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[68%] md:w-[20vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-2">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start md:justify-end"
-                className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">Night Perm</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[6]}
-                alt="Night Perm"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 8 */}
-          <div className="gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[75%] md:w-[30vw] h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-0 ml-auto mr-0 my-0 md:mr-auto md:ml-0 max-md:order-8">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start md:justify-end"
-                className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">IEEE CS, 2025</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[7]}
-                alt="IEEE CS, 2025"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
-          {/* Item 9 */}
-          <div className="gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[70%] md:w-[14vw] h-[36vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-0 mx-auto md:mx-0 max-md:order-11">
-            <div className="gallery-badge-wrapper">
-              <BoxReveal
-                align="justify-start"
-                className="md:translate-y-[-25px] md:absolute mb-2"
-                widthClass="w-fit"
-                marginClass="my-0"
-                paddingClass="p-0"
-                boxColor="#f9ba1f"
-                duration={2.5}
-                standalone={true}
-              >
-                <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">IEEE CCs SUMMIT, 2025</p>
-              </BoxReveal>
-            </div>
-            <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
-              <Image
-                src={HORIZONTAL_GALLERY_IMAGES[8]}
-                alt="IEEE CCs SUMMIT, 2025"
-                fill
-                decoding="async"
-                className="object-cover select-none"
-                sizes="(max-width: 768px) 90vw, 40vw"
-              />
-            </div>
-          </div>
-
+        <section className="skill-set relative w-full md:w-screen h-auto md:h-full flex flex-col md:items-center md:justify-center px-6 md:px-12 pt-0 pb-[clamp(2rem,5vh,4rem)] md:py-0 gap-32 md:gap-20 max-md:contents">
+          {SECTION_2_ITEMS.map((item) => (
+            <GalleryCardItem key={item.id} item={item} />
+          ))}
         </section>
-
       </div>
     </div>
   );
