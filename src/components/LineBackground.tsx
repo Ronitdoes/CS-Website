@@ -33,6 +33,8 @@ export default function TopographicBackground({
 
     let width = 0;
     let height = 0;
+    let lastRenderedWidth = 0;
+    let lastRenderedHeight = 0;
     let dpr = 1;
     let animFrameId = 0;
     let time = 0;
@@ -48,8 +50,11 @@ export default function TopographicBackground({
     let cellH = 0;
     let rowStride = 0;
     let activeLineCount = lineCount;
-    const minV = -0.85;
-    const maxV = 0.85;
+    let minV = -0.85;
+    let maxV = 0.85;
+    let scaleX = 250;
+    let scaleY = 250;
+    let currentLineWidth = 0.2;
 
     // Pre-allocated typed buffers (reused across frames to eliminate GC)
     let field = new Float32Array(0);
@@ -71,21 +76,57 @@ export default function TopographicBackground({
     let thresholds = new Float32Array(0);
     let invStep = 0;
 
-    const updateDimensions = () => {
-      const isMobile = window.innerWidth < 768;
+    const updateDimensions = (force = false) => {
+      const currentW = canvas.offsetWidth;
+      const currentH = canvas.offsetHeight;
+      if (currentW === 0 || currentH === 0) return;
+
+      const isMobile =
+        window.innerWidth < 768 ||
+        (window.innerHeight < 500 && window.matchMedia("(pointer: coarse)").matches);
+
+      // On mobile devices, vertical scrolling collapses/expands the browser toolbar by ~50-80px.
+      // Avoid resetting canvas buffer and reallocating arrays unless width changes or height changes significantly (e.g. orientation flip).
+      if (
+        !force &&
+        isMobile &&
+        currentW === lastRenderedWidth &&
+        Math.abs(currentH - lastRenderedHeight) < 120
+      ) {
+        return;
+      }
+
+      lastRenderedWidth = currentW;
+      lastRenderedHeight = currentH;
+      width = currentW;
+      height = currentH;
+
+      // Desktop: 1.25 clamp. Mobile: 1.0 for peak 60fps fill-rate performance.
       dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.25);
-      width = canvas.offsetWidth;
-      height = canvas.offsetHeight;
-      if (width === 0 || height === 0) return;
 
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      activeLineCount = isMobile ? 4 : lineCount;
+      // Desktop: untouched (lineCount). Mobile: rich line density (up to 12 lines).
+      activeLineCount = isMobile ? Math.min(lineCount, 12) : lineCount;
 
+      // Desktop: untouched 250. Mobile: 150/160 for natural wave frequency on portrait screens.
+      scaleX = isMobile ? 150 : 250;
+      scaleY = isMobile ? 160 : 250;
+
+      // Desktop: untouched [-0.85, 0.85]. Mobile: [-0.68, 0.68] so all lines cross active variance.
+      minV = isMobile ? -0.68 : -0.85;
+      maxV = isMobile ? 0.68 : 0.85;
+
+      // Desktop: untouched 0.2. Mobile: 0.4 for delicate and crisp visibility on high-DPI screens.
+      currentLineWidth = isMobile ? 0.4 : 0.2;
+
+      // Desktop: untouched. Mobile: smooth cell size ~18-20px.
       const maxDim = Math.max(width, height);
-      const cellSize = Math.max(isMobile ? 28 : 22, maxDim / (isMobile ? 60 : 90));
+      const cellSize = isMobile
+        ? Math.max(16, Math.min(width, height) / 22)
+        : Math.max(22, maxDim / 90);
 
       cols = Math.ceil(width / cellSize);
       rows = Math.ceil(height / cellSize);
@@ -120,7 +161,7 @@ export default function TopographicBackground({
       }
 
       for (let j = 0; j <= rows; j++) {
-        const ny = (j * cellH) / 250;
+        const ny = (j * cellH) / scaleY;
         rowC2[j] = Math.cos(ny * 0.5);
         rowS2[j] = Math.sin(ny * 0.5);
         rowC3[j] = Math.cos(ny * 0.9);
@@ -154,7 +195,7 @@ export default function TopographicBackground({
 
       // Precompute 1D column values for time t
       for (let i = 0; i <= cols; i++) {
-        const nx = (i * cellW) / 250;
+        const nx = (i * cellW) / scaleX;
         colK1[i] = 0.4 * Math.sin(nx * 0.8 + t * 0.12);
 
         const u2 = nx * 0.4 + t * 0.07;
@@ -173,7 +214,7 @@ export default function TopographicBackground({
       // Compute scalar field using separable components (pure arithmetic in inner loop)
       for (let j = 0; j <= rows; j++) {
         const rowOffset = j * rowStride;
-        const ny = (j * cellH) / 250;
+        const ny = (j * cellH) / scaleY;
         const r1 = Math.cos(ny * 0.6 + t * 0.09);
         const c2 = rowC2[j], s2 = rowS2[j];
         const c3 = rowC3[j], s3 = rowS3[j];
@@ -189,7 +230,7 @@ export default function TopographicBackground({
       }
 
       ctx.strokeStyle = lineColor;
-      ctx.lineWidth = 0.2;
+      ctx.lineWidth = currentLineWidth;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
@@ -353,8 +394,13 @@ export default function TopographicBackground({
       ctx.stroke();
     };
 
+    let prefersReducedMotion = false;
+    if (typeof window !== "undefined") {
+      prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
     const startAnimation = () => {
-      if (isRunning || !animated) return;
+      if (isRunning || !animated || prefersReducedMotion) return;
       isRunning = true;
       lastTime = 0;
       animFrameId = requestAnimationFrame(animate);
@@ -368,14 +414,14 @@ export default function TopographicBackground({
     };
 
     const animate = (now: number) => {
-      if (!isVisible || !isIntersecting) {
+      if (!isVisible || !isIntersecting || prefersReducedMotion) {
         isRunning = false;
         lastTime = 0;
         return;
       }
 
       if (lastTime === 0) lastTime = now;
-      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      const delta = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       time += delta * 2.6;
@@ -385,14 +431,14 @@ export default function TopographicBackground({
     };
 
     const handleResize = () => {
-      updateDimensions();
+      updateDimensions(false);
       drawContours(time);
     };
 
-    updateDimensions();
+    updateDimensions(true);
     drawContours(time);
 
-    if (animated) {
+    if (animated && !prefersReducedMotion) {
       startAnimation();
     }
 
@@ -402,11 +448,27 @@ export default function TopographicBackground({
         stopAnimation();
       } else {
         isVisible = true;
-        if (isIntersecting && animated) {
+        if (isIntersecting && animated && !prefersReducedMotion) {
           startAnimation();
         }
       }
     };
+
+    let motionMediaQuery: MediaQueryList | null = null;
+    const handleMotionChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+      if (prefersReducedMotion) {
+        stopAnimation();
+        drawContours(time);
+      } else if (isVisible && isIntersecting && animated) {
+        startAnimation();
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      motionMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      motionMediaQuery.addEventListener("change", handleMotionChange);
+    }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("resize", handleResize, { passive: true });
@@ -424,7 +486,7 @@ export default function TopographicBackground({
       intersectionObserver = new IntersectionObserver((entries) => {
         const entry = entries[0];
         isIntersecting = entry ? entry.isIntersecting : true;
-        if (isIntersecting && isVisible && animated) {
+        if (isIntersecting && isVisible && animated && !prefersReducedMotion) {
           startAnimation();
         } else if (!isIntersecting) {
           stopAnimation();
@@ -437,6 +499,7 @@ export default function TopographicBackground({
       stopAnimation();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", handleResize);
+      if (motionMediaQuery) motionMediaQuery.removeEventListener("change", handleMotionChange);
       if (resizeObserver) resizeObserver.disconnect();
       if (intersectionObserver) intersectionObserver.disconnect();
     };
@@ -446,7 +509,17 @@ export default function TopographicBackground({
     <canvas
       ref={canvasRef}
       className={`block ${className}`}
-      style={{ background: backgroundColor, width: "100%", height: "100%", display: "block" }}
+      style={{
+        background: backgroundColor,
+        width: "100%",
+        height: "100%",
+        display: "block",
+        pointerEvents: "none",
+        touchAction: "none",
+        contain: "strict",
+        willChange: "transform",
+        transform: "translate3d(0, 0, 0)",
+      }}
     />
   );
 }

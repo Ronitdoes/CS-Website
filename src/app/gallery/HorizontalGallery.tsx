@@ -41,31 +41,31 @@ const SECTION_1_ITEMS: GalleryCardData[] = [
     id: 1,
     title: "WE ARE IEEE",
     image: HORIZONTAL_GALLERY_IMAGES[0],
-    cardClassName: "gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[68%] md:w-[25vw] h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-0 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1",
+    cardClassName: "gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[74%] sm:w-[65%] md:w-[25vw] h-[36vh] sm:h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1",
     badgeAlign: "justify-start md:justify-end",
-    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
     priority: true,
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "z-0 object-cover select-none",
   },
   {
     id: 2,
     title: "VENOM, 2026",
     image: HORIZONTAL_GALLERY_IMAGES[1],
-    cardClassName: "gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[68%] md:w-[15vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 mr-auto ml-0 my-0 max-md:order-9",
+    cardClassName: "gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[70%] sm:w-[62%] md:w-[15vw] h-[34vh] sm:h-[36vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:mr-auto md:ml-0 my-0 max-md:order-9",
     badgeAlign: "justify-start",
     badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "object-cover select-none",
   },
   {
     id: 3,
     title: "HACKERZ STREET 4.0, 2026",
     image: HORIZONTAL_GALLERY_IMAGES[2],
-    cardClassName: "gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[75%] md:w-[28vw] h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 md:ml-auto md:mr-0 max-md:order-3",
+    cardClassName: "gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[78%] sm:w-[70%] md:w-[28vw] h-[40vh] sm:h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:ml-auto md:mr-0 my-0 max-md:order-3",
     badgeAlign: "justify-start",
     badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
-    sizes: "(max-width: 768px) 90vw, 50vw",
+    sizes: "(max-width: 768px) 85vw, 50vw",
     imageClassName: "object-cover select-none",
   },
 ];
@@ -75,60 +75,60 @@ const SECTION_2_ITEMS: GalleryCardData[] = [
     id: 4,
     title: "HACKERZ STREET 4.0, 2026",
     image: HORIZONTAL_GALLERY_IMAGES[3],
-    cardClassName: "gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[68%] md:w-[18vw] h-[34vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-0 mr-auto ml-0 my-0 max-md:order-6",
+    cardClassName: "gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[72%] sm:w-[64%] md:w-[18vw] h-[34vh] sm:h-[36vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mr-auto md:ml-0 my-0 max-md:order-6",
     badgeAlign: "justify-start",
     badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "object-cover select-none",
   },
   {
     id: 5,
     title: "Social Outreach, 2025",
     image: HORIZONTAL_GALLERY_IMAGES[4],
-    cardClassName: "gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[68%] md:w-[27vw] h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-5",
+    cardClassName: "gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[72%] sm:w-[65%] md:w-[27vw] h-[36vh] sm:h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:ml-auto md:mr-0 my-0 max-md:order-5",
     badgeAlign: "justify-start md:justify-end",
-    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "object-cover select-none",
   },
   {
     id: 6,
     title: "GENESIS 5.0, 2025",
     image: HORIZONTAL_GALLERY_IMAGES[5],
-    cardClassName: "gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[72%] md:w-[25vw] h-[36vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-0 mx-auto md:mr-auto md:ml-0 my-0 max-md:order-7",
+    cardClassName: "gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[76%] sm:w-[68%] md:w-[25vw] h-[36vh] sm:h-[38vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:mr-auto md:ml-0 my-0 max-md:order-7",
     badgeAlign: "justify-start",
-    badgeClassName: "-translate-y-6 md:translate-y-[-25px] md:absolute mb-2 z-20",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2 z-20",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "z-0 object-cover select-none",
   },
   {
     id: 7,
     title: "Night Perm",
     image: HORIZONTAL_GALLERY_IMAGES[6],
-    cardClassName: "gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[68%] md:w-[20vw] h-[34vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-0 ml-auto mr-0 my-0 max-md:order-2",
+    cardClassName: "gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[72%] sm:w-[65%] md:w-[20vw] h-[34vh] sm:h-[36vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:ml-auto md:mr-0 my-0 max-md:order-2",
     badgeAlign: "justify-start md:justify-end",
-    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "object-cover select-none",
   },
   {
     id: 8,
     title: "IEEE CS, 2025",
     image: HORIZONTAL_GALLERY_IMAGES[7],
-    cardClassName: "gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[75%] md:w-[30vw] h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-0 ml-auto mr-0 my-0 md:mr-auto md:ml-0 max-md:order-8",
+    cardClassName: "gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[78%] sm:w-[70%] md:w-[30vw] h-[38vh] sm:h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mr-auto md:ml-0 my-0 max-md:order-8",
     badgeAlign: "justify-start md:justify-end",
-    badgeClassName: "md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 85vw, 40vw",
     imageClassName: "object-cover select-none",
   },
   {
     id: 9,
     title: "IEEE CCs SUMMIT, 2025",
     image: HORIZONTAL_GALLERY_IMAGES[8],
-    cardClassName: "gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[70%] md:w-[14vw] h-[36vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-0 mx-auto md:mx-0 max-md:order-11",
+    cardClassName: "gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[74%] sm:w-[66%] md:w-[14vw] h-[36vh] sm:h-[38vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mx-0 max-md:order-10",
     badgeAlign: "justify-start",
     badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
-    sizes: "(max-width: 768px) 90vw, 40vw",
+    sizes: "(max-width: 768px) 80vw, 40vw",
     imageClassName: "object-cover select-none",
   },
 ];
@@ -137,16 +137,16 @@ const textContainerVariants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.3,
-      delayChildren: 0.15,
+      staggerChildren: 0.25,
+      delayChildren: 0.1,
     },
   },
 };
 
 const GalleryCardItem = React.memo(function GalleryCardItem({ item }: { item: GalleryCardData }) {
   return (
-    <div className={item.cardClassName}>
-      <div className="gallery-badge-wrapper max-md:absolute max-md:bottom-[calc(100%+0.35rem)] max-md:left-0 max-md:w-auto max-md:max-w-full max-md:mb-0 max-md:flex max-md:z-30">
+    <div className={`${item.cardClassName} flex flex-col md:block`}>
+      <div className="gallery-badge-wrapper max-md:relative max-md:w-full max-md:mb-2 max-md:flex max-md:items-center max-md:z-30">
         <BoxReveal
           align={item.badgeAlign}
           className={item.badgeClassName}
@@ -156,11 +156,14 @@ const GalleryCardItem = React.memo(function GalleryCardItem({ item }: { item: Ga
           boxColor="#f9ba1f"
           duration={2.5}
           standalone={true}
+          viewportMargin="0px 0px -20px 0px"
         >
-          <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">{item.title}</p>
+          <p className="text-[#f9ba1f] text-[13px] sm:text-[14px] md:text-[10px] font-medium tracking-wide">
+            {item.title}
+          </p>
         </BoxReveal>
       </div>
-      <div className="relative w-full h-full overflow-hidden rounded-sm bg-[#141414]">
+      <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden rounded-sm bg-[#141414] shadow-md">
         <Image
           src={item.image}
           alt={item.title}
@@ -273,16 +276,16 @@ export default function HorizontalGallery() {
         wrapper.current
       );
 
-      gsap.set(mobileItems, { y: 28, opacity: 0, force3D: true });
+      gsap.set(mobileItems, { y: 24, opacity: 0, force3D: true });
 
       ScrollTrigger.batch(mobileItems, {
-        start: "top 92%",
+        start: "top 95%",
         once: true,
         onEnter: (batch) => {
           gsap.to(batch, {
             y: 0,
             opacity: 1,
-            duration: 0.65,
+            duration: 0.6,
             stagger: 0.08,
             ease: "power2.out",
             force3D: true,
@@ -304,7 +307,7 @@ export default function HorizontalGallery() {
     >
       <div
         ref={scroller}
-        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[5.5rem] max-md:py-16 max-md:px-6 max-md:h-auto max-md:w-full md:will-change-transform"
+        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[4.5rem] sm:max-md:gap-[5.5rem] max-md:py-14 max-md:px-5 sm:max-md:px-8 max-md:h-auto max-md:w-full md:will-change-transform"
       >
         {/* SECTION 1 */}
         <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20 max-md:contents">
@@ -313,22 +316,22 @@ export default function HorizontalGallery() {
           ))}
 
           {/* Text 1 */}
-          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-4 md:my-0 max-md:order-4 max-md:self-center max-md:mx-auto">
+          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-6 md:my-0 max-md:order-4 max-md:self-center max-md:py-6">
             <motion.div
               variants={textContainerVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-10% 0px" }}
+              viewport={{ once: true, margin: "0px 0px -40px 0px" }}
               className="w-full flex flex-col items-center md:items-end"
             >
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">It doesn&apos;t matter where</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">It doesn&apos;t matter where</p>
               </BoxReveal>
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">you start, it&apos;s how you</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">you start, it&apos;s how you</p>
               </BoxReveal>
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">progress from there.</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">progress from there.</p>
               </BoxReveal>
             </motion.div>
           </div>

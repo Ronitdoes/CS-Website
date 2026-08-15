@@ -15,6 +15,7 @@ interface BoxRevealProps {
   widthClass?: string; // Custom width class (defaults to "w-full")
   marginClass?: string; // Custom margin class (defaults to "-my-1 sm:-my-2")
   standalone?: boolean; // Set to true to trigger its own viewport triggers when not staggered by a parent
+  viewportMargin?: string; // Optional custom viewport margin
 }
 
 export default function BoxReveal({
@@ -29,6 +30,7 @@ export default function BoxReveal({
   widthClass = "w-full",
   marginClass = "-my-1 sm:-my-2",
   standalone = false,
+  viewportMargin = "0px 0px -20px 0px",
 }: BoxRevealProps) {
   const textVariants: Variants = {
     hidden: {
@@ -68,7 +70,7 @@ export default function BoxReveal({
       }}
       initial={standalone ? "hidden" : undefined}
       whileInView={standalone ? "visible" : undefined}
-      viewport={standalone ? { once: true, margin: "-10% 0px" } : undefined}
+      viewport={standalone ? { once: true, margin: viewportMargin, amount: 0.1 } : undefined}
       className={`relative flex ${align} items-center select-none ${widthClass} ${marginClass} ${className}`}
     >
       {/* Boxed Reveal Container bounds block to text dimensions with vertical padding */}

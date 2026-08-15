@@ -9,8 +9,10 @@ const ProjectCard = dynamic(() => import("@/components/common/ProjectCard"), { s
 const LandingText = dynamic(() => import("@/components/common/LandingText"), { ssr: false });
 const HeroImageSequence = dynamic(() => import("@/components/common/HeroImageSequence"), { ssr: false });
 import { useLoading } from "@/context/LoadingContext";
+import { useLenis } from "@/components/providers/ScrollProvider";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LineBackground from "@/components/LineBackground";
 const ScrollVelocity = dynamic(() => import("@/components/ScrollVelocity"), { ssr: false });
 
@@ -33,11 +35,100 @@ const TOTAL_INTRO = HELLO_LANGUAGES.length * WORD_DURATION + 1000;
 
 export default function Home() {
   const { isReady } = useLoading();
+  const lenis = useLenis();
   const [startIntro, setStartIntro] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const heroPinRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
+
+  // Lock scroll completely while the intro greeting section is active
+  useEffect(() => {
+    if (showIntro) {
+      lenis?.stop();
+      lenis?.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
+
+      // Disable GSAP normalizer if active
+      const normalizer = ScrollTrigger.normalizeScroll();
+      if (normalizer) {
+        normalizer.disable();
+      }
+
+      // Hard freeze page scroll styles
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = "0px";
+      document.body.style.left = "0px";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+
+      const preventScroll = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      };
+
+      const preventScrollKeys = (e: KeyboardEvent) => {
+        if (
+          ["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(
+            e.code
+          )
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+        }
+      };
+
+      // Capture phase listeners ensure no component or library receives scroll events
+      window.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      window.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      document.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      document.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      window.addEventListener("keydown", preventScrollKeys, { passive: false, capture: true });
+      document.addEventListener("keydown", preventScrollKeys, { passive: false, capture: true });
+
+      return () => {
+        window.removeEventListener("wheel", preventScroll, { capture: true });
+        window.removeEventListener("touchmove", preventScroll, { capture: true });
+        document.removeEventListener("wheel", preventScroll, { capture: true });
+        document.removeEventListener("touchmove", preventScroll, { capture: true });
+        window.removeEventListener("keydown", preventScrollKeys, { capture: true });
+        document.removeEventListener("keydown", preventScrollKeys, { capture: true });
+
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+
+        if (normalizer) {
+          normalizer.enable();
+        }
+        lenis?.start();
+        ScrollTrigger.refresh();
+      };
+    } else {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
+
+      const normalizer = ScrollTrigger.normalizeScroll();
+      if (normalizer) {
+        normalizer.enable();
+      }
+      lenis?.start();
+      ScrollTrigger.refresh();
+    }
+  }, [showIntro, lenis, isReady]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -164,14 +255,14 @@ export default function Home() {
       {showIntro ? (
         <div
           ref={introRef}
-          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md md:backdrop-blur-xl"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md md:backdrop-blur-xl touch-none select-none"
           style={{ 
             willChange: "transform, opacity",
             backgroundColor: "rgba(0, 0, 0, 0.55)",
           }}
         >
           {/* Vertical mask viewport to clip sliding text */}
-          <div className="text-center overflow-hidden h-[120px] flex items-center justify-center">
+          <div className="text-center overflow-hidden h-[120px] flex items-center justify-center pointer-events-none">
             <span
               ref={textRef}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-white block select-none"
