@@ -68,69 +68,115 @@ const CHANNELS: Channel[] = [
   },
 ];
 
-interface GlitchLine {
-  id: number;
-  style: React.CSSProperties;
-}
+// Precompute static styles to avoid runtime string concatenation and object allocations
+const GLOW_SHADOWS = CHANNELS.map((ch) => {
+  const { r, g, b } = ch;
+  const brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+  const a = 0.28 + brightness * 0.3;
+  return `0 0 18px rgba(${r}, ${g}, ${b}, ${a}), 0 0 45px rgba(${r}, ${g}, ${b}, ${a * 0.6}), 0 0 90px rgba(${r}, ${g}, ${b}, ${a * 0.3})`;
+});
+
+const SCREEN_IMG_STYLES: React.CSSProperties[] = CHANNELS.map((ch) => ({
+  backgroundImage: ch.img ? `url('${ch.img}')` : "none",
+  backgroundColor: ch.hex,
+}));
+
+const GLITCH_LINE_COUNT = 6;
+const GLITCH_INDICES = Array.from({ length: GLITCH_LINE_COUNT }, (_, i) => i);
 
 export default function TVComponent() {
   const [currentCh, setCurrentCh] = useState(0);
   const [switching, setSwitching] = useState(false);
   const [glitching, setGlitching] = useState(false);
-  const [glitchLines, setGlitchLines] = useState<GlitchLine[]>([]);
-  
+  const [isInView, setIsInView] = useState(false);
+
+  const currentChRef = useRef(0);
+  const switchingRef = useRef(false);
+  const isInViewRef = useRef(false);
   const autoTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tvScreenRef = useRef<HTMLDivElement>(null);
   const glitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const switchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const glitchLineRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const switchTo = useCallback(
-    (idx: number) => {
-      if (switching) return;
-      setSwitching(true);
+  // Keep refs in sync with state
+  currentChRef.current = currentCh;
+  switchingRef.current = switching;
+  isInViewRef.current = isInView;
 
-      const targetIdx = ((idx % CHANNELS.length) + CHANNELS.length) % CHANNELS.length;
+  // Stable channel switcher
+  const switchTo = useCallback((idx: number) => {
+    if (switchingRef.current) return;
+    switchingRef.current = true;
+    setSwitching(true);
 
-      if (switchTimeoutRef.current) {
-        clearTimeout(switchTimeoutRef.current);
-      }
+    const targetIdx = ((idx % CHANNELS.length) + CHANNELS.length) % CHANNELS.length;
 
-      switchTimeoutRef.current = setTimeout(() => {
-        setCurrentCh(targetIdx);
-        setSwitching(false);
-      }, 220);
-    },
-    [switching]
-  );
+    if (switchTimeoutRef.current) {
+      clearTimeout(switchTimeoutRef.current);
+    }
+
+    switchTimeoutRef.current = setTimeout(() => {
+      setCurrentCh(targetIdx);
+      currentChRef.current = targetIdx;
+      setSwitching(false);
+      switchingRef.current = false;
+    }, 220);
+  }, []);
 
   const next = useCallback(() => {
-    switchTo(currentCh + 1);
-  }, [currentCh, switchTo]);
+    switchTo(currentChRef.current + 1);
+  }, [switchTo]);
 
   const prev = useCallback(() => {
-    switchTo(currentCh - 1);
-  }, [currentCh, switchTo]);
+    switchTo(currentChRef.current - 1);
+  }, [switchTo]);
 
-  const restartAutoTimer = useCallback(
-    (delayMs = 1500) => {
-      if (autoTimerRef.current) {
-        clearInterval(autoTimerRef.current);
-      }
-      autoTimerRef.current = setInterval(() => {
-        next();
-      }, delayMs);
-    },
-    [next]
-  );
+  const restartAutoTimer = useCallback((delayMs = 1500) => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+    if (!isInViewRef.current) return;
+    autoTimerRef.current = setInterval(() => {
+      switchTo(currentChRef.current + 1);
+    }, delayMs);
+  }, [switchTo]);
 
+  // Observer for visibility
   useEffect(() => {
-    restartAutoTimer(1500);
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const inView = entry.isIntersecting;
+        setIsInView(inView);
+        isInViewRef.current = inView;
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Auto advance on timer
+  useEffect(() => {
+    if (isInView) {
+      restartAutoTimer(1500);
+    } else if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
     return () => {
       if (autoTimerRef.current) {
         clearInterval(autoTimerRef.current);
+        autoTimerRef.current = null;
       }
     };
-  }, [restartAutoTimer]);
+  }, [isInView, restartAutoTimer]);
 
   const handleInteraction = useCallback(() => {
     restartAutoTimer(3000);
@@ -141,42 +187,38 @@ export default function TVComponent() {
     next();
   }, [handleInteraction, next]);
 
-  const spawnGlitchLines = useCallback(() => {
-    if (!tvScreenRef.current) return;
-    const screenH = tvScreenRef.current.offsetHeight || 285;
-    const count = 3 + Math.floor(Math.random() * 5);
-    const lines: GlitchLine[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const top = Math.random() * screenH;
-      const h = 1 + Math.random() * 6;
-      const w = 30 + Math.random() * 70; 
-      const left = Math.random() * (100 - w);
-      const alpha = 0.05 + Math.random() * 0.2;
-      const isColor = Math.random() > 0.6;
-      
-      const style: React.CSSProperties = {
-        position: "absolute",
-        top: `${top}px`,
-        left: `${left}%`,
-        width: `${w}%`,
-        height: `${h}px`,
-        background: isColor
-          ? Math.random() > 0.5
-            ? `rgba(100, 200, 255, ${alpha})`
-            : `rgba(255, 100, 100, ${alpha})`
-          : `rgba(255, 255, 255, ${alpha})`,
-        mixBlendMode: "screen",
-      };
-
-      lines.push({ id: i, style });
-    }
-    setGlitchLines(lines);
-  }, []);
-
+  // Optimized zero-allocation glitch effect
   const triggerGlitch = useCallback(() => {
-    if (switching) return;
-    spawnGlitchLines();
+    if (switchingRef.current || !isInViewRef.current) return;
+
+    const screenH = tvScreenRef.current?.offsetHeight || 285;
+    const activeCount = 3 + Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < GLITCH_LINE_COUNT; i++) {
+      const el = glitchLineRefs.current[i];
+      if (!el) continue;
+      if (i < activeCount) {
+        const top = Math.random() * screenH;
+        const h = 1 + Math.random() * 5;
+        const w = 30 + Math.random() * 70;
+        const left = Math.random() * (100 - w);
+        const alpha = 0.05 + Math.random() * 0.2;
+        const isColor = Math.random() > 0.6;
+        const bg = isColor
+          ? (Math.random() > 0.5 ? `rgba(100, 200, 255, ${alpha})` : `rgba(255, 100, 100, ${alpha})`)
+          : `rgba(255, 255, 255, ${alpha})`;
+
+        el.style.top = `${top}px`;
+        el.style.left = `${left}%`;
+        el.style.width = `${w}%`;
+        el.style.height = `${h}px`;
+        el.style.background = bg;
+        el.style.display = "block";
+      } else {
+        el.style.display = "none";
+      }
+    }
+
     setGlitching(true);
 
     if (glitchTimeoutRef.current) {
@@ -185,11 +227,16 @@ export default function TVComponent() {
 
     glitchTimeoutRef.current = setTimeout(() => {
       setGlitching(false);
-      setGlitchLines([]);
+      for (let i = 0; i < GLITCH_LINE_COUNT; i++) {
+        const el = glitchLineRefs.current[i];
+        if (el) el.style.display = "none";
+      }
     }, 150);
-  }, [switching, spawnGlitchLines]);
+  }, []);
 
+  // Stable Glitch scheduler
   useEffect(() => {
+    if (!isInView) return;
     let timerId: NodeJS.Timeout;
 
     const schedule = () => {
@@ -208,8 +255,9 @@ export default function TVComponent() {
         clearTimeout(glitchTimeoutRef.current);
       }
     };
-  }, [triggerGlitch]);
+  }, [isInView, triggerGlitch]);
 
+  // Clean up channel switch timer on unmount
   useEffect(() => {
     return () => {
       if (switchTimeoutRef.current) {
@@ -218,6 +266,7 @@ export default function TVComponent() {
     };
   }, []);
 
+  // Keyboard navigation registered once on mount
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -229,50 +278,33 @@ export default function TVComponent() {
         e.preventDefault();
         handleInteraction();
         next();
-      }
-      if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
         e.preventDefault();
         handleInteraction();
         prev();
-      }
-      const n = parseInt(e.key);
-      if (!isNaN(n) && n >= 1 && n <= 5) {
-        handleInteraction();
-        switchTo(n - 1);
+      } else {
+        const n = parseInt(e.key, 10);
+        if (!isNaN(n) && n >= 1 && n <= 5) {
+          handleInteraction();
+          switchTo(n - 1);
+        }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { passive: false });
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [next, prev, switchTo, handleInteraction]);
 
   const activeCh = CHANNELS[currentCh];
-  const screenImgStyle: React.CSSProperties = {
-    backgroundImage: activeCh.img ? `url('${activeCh.img}')` : "none",
-    backgroundColor: activeCh.hex,
-  };
+  const screenImgStyle = SCREEN_IMG_STYLES[currentCh];
+  const glowShadow = GLOW_SHADOWS[currentCh];
 
-  const { r, g, b } = activeCh;
-  const brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
-  const a = 0.28 + brightness * 0.3;
-  const glowShadow = `
-    0 0 18px rgba(${r}, ${g}, ${b}, ${a}),
-    0 0 45px rgba(${r}, ${g}, ${b}, ${a * 0.6}),
-    0 0 90px rgba(${r}, ${g}, ${b}, ${a * 0.3})
-  `;
-
-  const screenClasses = [
-    styles.tvScreen,
-    switching ? styles.switching : "",
-    glitching ? styles.glitching : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const screenClasses = `${styles.tvScreen} ${switching ? styles.switching : ""} ${glitching ? styles.glitching : ""}`.trim();
 
   return (
-    <div className={styles.tvWrap}>
+    <div ref={containerRef} className={styles.tvWrap}>
       <div className={styles.tvCabinet}>
         <div className={styles.tvBezel}>
           <div
@@ -287,8 +319,12 @@ export default function TVComponent() {
             <div className={styles.screenOverlay} />
             <div className={styles.scanlines} />
             <div className={styles.glitchLayer}>
-              {glitchLines.map((line) => (
-                <div key={line.id} style={line.style} />
+              {GLITCH_INDICES.map((i) => (
+                <div
+                  key={i}
+                  ref={(el) => { glitchLineRefs.current[i] = el; }}
+                  className={styles.glitchLine}
+                />
               ))}
             </div>
             <div className={styles.screenContent}>

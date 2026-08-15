@@ -5,7 +5,6 @@ import React from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
-import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
 import type { EventItem } from "@/data/eventsData";
 
 const TiltedPhotoGrid = dynamic(() => import("@/components/common/TiltedPhotoGrid"), { ssr: false });
@@ -41,7 +40,7 @@ export default function ClientEventPage({ events }: ClientEventPageProps) {
   }, []);
 
   return (
-    <SmoothScrollProvider>
+    <>
       <section
         ref={landingRef}
         className="h-screen sticky top-0 flex items-center justify-between px-32 bg-[#1a1a1a] text-white z-10 relative"
@@ -62,6 +61,6 @@ export default function ClientEventPage({ events }: ClientEventPageProps) {
           <Eventcard events={events} />
         </section>
       </section>
-    </SmoothScrollProvider>
+    </>
   );
 }

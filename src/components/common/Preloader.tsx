@@ -4,22 +4,30 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useLoading } from "@/context/LoadingContext";
+import { useLenis } from "@/components/providers/ScrollProvider";
 
 export default function Preloader() {
   const { isReady, setVideoFinished } = useLoading();
+  const lenis = useLenis();
 
   useEffect(() => {
-    // Lock scroll while preloader is visible
+    // Lock scroll while preloader is visible; unlock immediately when ready
     if (!isReady) {
+      lenis?.stop();
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      lenis?.start();
     }
 
     return () => {
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      lenis?.start();
     };
-  }, [isReady]);
+  }, [isReady, lenis]);
 
   const handleVideoEnd = () => {
     sessionStorage.setItem("preloaderShown", "true");

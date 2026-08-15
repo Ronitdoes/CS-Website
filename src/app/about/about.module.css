@@ -1,7 +1,7 @@
 /* ── About Page ── */
 
 .scrollCanvas {
-    height: calc(100vh + 700px);
+    height: calc(100vh + 650px);
 }
 
 .stickyHero {
@@ -18,8 +18,13 @@
 }
 
 .contentSection {
-    padding-top: 10vh;
-    padding-bottom: 12vh;
+    height: 100vh;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
 }
 
 /* Mirrors the navbar container: 95% wide, max 1300px, centered */
@@ -45,14 +50,16 @@
         justify-content: flex-start;
     }
     .contentSection {
-        padding-top: 5vh;
-        padding-bottom: 5vh;
+        padding-top: 6vh;
+        padding-bottom: 8vh;
+        min-height: auto;
     }
 }
 
 @media (max-width: 768px) {
     .stickyHero {
         padding-left: 5vw;
+        padding-right: 5vw;
         justify-content: center;
     }
 }

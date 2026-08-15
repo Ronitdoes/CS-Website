@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -8,17 +8,177 @@ import { useGSAP } from "@gsap/react";
 import { motion } from 'framer-motion';
 import BoxReveal from '@/components/common/BoxReveal';
 
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+export const HORIZONTAL_GALLERY_IMAGES = [
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560566447_akr6jp.avif",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560022208_0qc8i9.avif",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782561501835_is8g49.avif",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782565661341_zbz8t.webp",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560271203_88tlqb.avif",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571214276_nw4rqm.webp",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560416402_819ju.jpeg",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782559824603_l6h16c.avif",
+  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571207688_kxib06.webp",
+];
+
+interface GalleryCardData {
+  id: number;
+  title: string;
+  image: string;
+  cardClassName: string;
+  badgeAlign: string;
+  badgeClassName: string;
+  sizes: string;
+  imageClassName?: string;
+  priority?: boolean;
+}
+
+const SECTION_1_ITEMS: GalleryCardData[] = [
+  {
+    id: 1,
+    title: "WE ARE IEEE",
+    image: HORIZONTAL_GALLERY_IMAGES[0],
+    cardClassName: "gallery-item-card gallery-item-1 gallery-item-left relative md:absolute md:right-[600px] md:top-[150px] w-[74%] sm:w-[65%] md:w-[25vw] h-[36vh] sm:h-[38vh] md:h-[35vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:ml-auto md:mr-0 mt-0 md:mt-0 max-md:order-1",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    priority: true,
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "z-0 object-cover select-none",
+  },
+  {
+    id: 2,
+    title: "VENOM, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[1],
+    cardClassName: "gallery-item-card gallery-item-2 gallery-item-right relative md:absolute md:right-[600px] md:bottom-[120px] w-[70%] sm:w-[62%] md:w-[15vw] h-[34vh] sm:h-[36vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:mr-auto md:ml-0 my-0 max-md:order-9",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 3,
+    title: "HACKERZ STREET 4.0, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[2],
+    cardClassName: "gallery-item-card gallery-item-3 gallery-item-left relative md:absolute md:right-[0px] md:bottom-[120px] w-[78%] sm:w-[70%] md:w-[28vw] h-[40vh] sm:h-[42vh] md:h-[45vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:ml-auto md:mr-0 my-0 max-md:order-3",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 85vw, 50vw",
+    imageClassName: "object-cover select-none",
+  },
+];
+
+const SECTION_2_ITEMS: GalleryCardData[] = [
+  {
+    id: 4,
+    title: "HACKERZ STREET 4.0, 2026",
+    image: HORIZONTAL_GALLERY_IMAGES[3],
+    cardClassName: "gallery-item-card gallery-item-4 gallery-item-left relative md:absolute md:left-[100px] md:top-[150px] w-[72%] sm:w-[64%] md:w-[18vw] h-[34vh] sm:h-[36vh] md:h-[18vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mr-auto md:ml-0 my-0 max-md:order-6",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 5,
+    title: "Social Outreach, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[4],
+    cardClassName: "gallery-item-card gallery-item-5 gallery-item-right relative md:absolute md:left-[180px] md:bottom-[180px] w-[72%] sm:w-[65%] md:w-[27vw] h-[36vh] sm:h-[38vh] md:h-[27vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:ml-auto md:mr-0 my-0 max-md:order-5",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 6,
+    title: "GENESIS 5.0, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[5],
+    cardClassName: "gallery-item-card gallery-item-6 gallery-item-right relative md:absolute md:left-[670px] md:bottom-[80px] w-[76%] sm:w-[68%] md:w-[25vw] h-[36vh] sm:h-[38vh] md:h-auto md:aspect-[16/9] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:mr-auto md:ml-0 my-0 max-md:order-7",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2 z-20",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "z-0 object-cover select-none",
+  },
+  {
+    id: 7,
+    title: "Night Perm",
+    image: HORIZONTAL_GALLERY_IMAGES[6],
+    cardClassName: "gallery-item-card gallery-item-7 gallery-item-right relative md:absolute md:right-[720px] md:top-[180px] w-[72%] sm:w-[65%] md:w-[20vw] h-[34vh] sm:h-[36vh] md:h-[20vh] max-md:self-end max-md:ml-auto max-md:mr-5 sm:max-md:mr-8 md:ml-auto md:mr-0 my-0 max-md:order-2",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 8,
+    title: "IEEE CS, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[7],
+    cardClassName: "gallery-item-card gallery-item-8 gallery-item-left relative md:absolute md:right-[200px] md:top-[150px] w-[78%] sm:w-[70%] md:w-[30vw] h-[38vh] sm:h-[40vh] md:h-auto md:aspect-[16/9] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mr-auto md:ml-0 my-0 max-md:order-8",
+    badgeAlign: "justify-start md:justify-end",
+    badgeClassName: "md:translate-y-[-25px] md:absolute md:right-0 md:right-auto mb-2",
+    sizes: "(max-width: 768px) 85vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+  {
+    id: 9,
+    title: "IEEE CCs SUMMIT, 2025",
+    image: HORIZONTAL_GALLERY_IMAGES[8],
+    cardClassName: "gallery-item-card gallery-item-9 gallery-item-left relative md:absolute md:right-[40px] md:bottom-[130px] w-[74%] sm:w-[66%] md:w-[14vw] h-[36vh] sm:h-[38vh] md:h-[25vh] max-md:self-start max-md:mr-auto max-md:ml-5 sm:max-md:ml-8 md:mx-0 max-md:order-10",
+    badgeAlign: "justify-start",
+    badgeClassName: "md:translate-y-[-25px] md:absolute mb-2",
+    sizes: "(max-width: 768px) 80vw, 40vw",
+    imageClassName: "object-cover select-none",
+  },
+];
+
 const textContainerVariants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.3,
-      delayChildren: 0.15,
+      staggerChildren: 0.25,
+      delayChildren: 0.1,
     },
   },
 };
 
-gsap.registerPlugin(ScrollTrigger);
+const GalleryCardItem = React.memo(function GalleryCardItem({ item }: { item: GalleryCardData }) {
+  return (
+    <div className={`${item.cardClassName} flex flex-col md:block`}>
+      <div className="gallery-badge-wrapper max-md:relative max-md:w-full max-md:mb-2 max-md:flex max-md:items-center max-md:z-30">
+        <BoxReveal
+          align={item.badgeAlign}
+          className={item.badgeClassName}
+          widthClass="w-fit"
+          marginClass="my-0"
+          paddingClass="p-0"
+          boxColor="#f9ba1f"
+          duration={2.5}
+          standalone={true}
+          viewportMargin="0px 0px -20px 0px"
+        >
+          <p className="text-[#f9ba1f] text-[13px] sm:text-[14px] md:text-[10px] font-medium tracking-wide">
+            {item.title}
+          </p>
+        </BoxReveal>
+      </div>
+      <div className="relative w-full h-full min-h-0 flex-1 overflow-hidden rounded-sm bg-[#141414] shadow-md">
+        <Image
+          src={item.image}
+          alt={item.title}
+          fill
+          priority={item.priority}
+          loading={item.priority ? undefined : "lazy"}
+          decoding="async"
+          draggable={false}
+          className={item.imageClassName || "object-cover select-none"}
+          sizes={item.sizes}
+        />
+      </div>
+    </div>
+  );
+});
 
 export default function HorizontalGallery() {
   const scroller = useRef<HTMLDivElement | null>(null);
@@ -27,54 +187,76 @@ export default function HorizontalGallery() {
   useGSAP(() => {
     if (!scroller.current || !wrapper.current) return;
 
-    // Scoped query for sections to prevent transition conflicts
-    const sections = gsap.utils.toArray<HTMLElement>('.skill-set', wrapper.current);
-    if (sections.length === 0) return;
-
     const mm = gsap.matchMedia();
 
+    // Desktop: Seamless Synchronized Horizontal Pinned Scroll with Enhanced Depth
     mm.add("(min-width: 768px)", () => {
+      const SCROLL_DEPTH_MULTIPLIER = 1.85;
+
       const getScrollDistance = () => {
         if (!scroller.current) return 0;
         return scroller.current.scrollWidth - window.innerWidth;
       };
 
-      // 1. Pinned Horizontal Track ScrollTrigger (Handles locking full-screen at top top)
-      const st = ScrollTrigger.create({
-        trigger: scroller.current,
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true,
-        anticipatePin: 1,
-        start: "top top",
-        end: () => '+=' + getScrollDistance(),
-        id: "gallery-pin",
+      const section1Cards = gsap.utils.toArray<HTMLElement>(
+        '.skill-set:nth-child(1) > .gallery-item-card',
+        wrapper.current
+      );
+      const section2Cards = gsap.utils.toArray<HTMLElement>(
+        '.skill-set:nth-child(2) > .gallery-item-card',
+        wrapper.current
+      );
+
+      // Initial offscreen positions with GPU compositing
+      gsap.set(section1Cards, { y: 120, x: 60, opacity: 0, force3D: true });
+      gsap.set(section2Cards, { y: 120, x: 60, opacity: 0, force3D: true });
+
+      // 1. Unified Master Pin + Horizontal Translation Timeline with Extended Scroll Depth
+      const masterTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: scroller.current,
+          pin: true,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+          start: "top top",
+          end: () => `+=${getScrollDistance() * SCROLL_DEPTH_MULTIPLIER}`,
+          id: "gallery-master",
+        },
       });
 
-      // 2. Horizontal Translation Animation ScrollTrigger (Starts sliding early at 50% scroll)
-      ScrollTrigger.create({
-        trigger: scroller.current,
-        scrub: 1,
-        invalidateOnRefresh: true,
-        start: "top center", // Starts horizontal translation early when gallery reaches center
-        end: () => '+=' + (getScrollDistance() + window.innerHeight / 2), // Total scroll distance from center to end of pin
-        animation: gsap.to(scroller.current, {
+      // Master horizontal canvas translation
+      masterTl.to(
+        scroller.current,
+        {
           x: () => -getScrollDistance(),
-          ease: 'none',
-        }),
-        id: "gallery-anim",
-      });
+          ease: "none",
+          duration: 1,
+        },
+        0
+      );
 
-      // 3. Section 1 Items Fade/Slide-in
-      const section1Items = gsap.utils.toArray<HTMLElement>('.skill-set:nth-child(1) > div', wrapper.current);
-      gsap.set(section1Items, { y: 120, x: 60, opacity: 0 });
+      // Section 2 Cards entrance cleanly synchronized with scroll progress
+      masterTl.to(
+        section2Cards,
+        {
+          y: 0,
+          x: 0,
+          opacity: 1,
+          ease: "power2.out",
+          stagger: 0.05,
+          duration: 0.8,
+        },
+        0
+      );
 
+      // 2. Section 1 Items Fade & Slide-in (triggers on approach)
       ScrollTrigger.create({
         trigger: scroller.current,
         start: 'top 85%',
         once: true,
         onEnter: () => {
-          gsap.to(section1Items, {
+          gsap.to(section1Cards, {
             y: 0,
             x: 0,
             opacity: 1,
@@ -85,455 +267,82 @@ export default function HorizontalGallery() {
         },
         id: "gallery-fade-in-1",
       });
-
-      // 4. Section 2 Items Scrub Transition (Synced with anim start)
-      const section2Items = gsap.utils.toArray<HTMLElement>('.skill-set:nth-child(2) > div', wrapper.current);
-      gsap.set(section2Items, { y: 120, x: 60, opacity: 0 });
-
-      ScrollTrigger.create({
-        trigger: scroller.current,
-        scrub: 0.8,
-        start: 'top center', // Synced with animation start at center
-        end: () => '+=' + (getScrollDistance() + window.innerHeight / 2),
-        animation: gsap.to(section2Items, {
-          y: 0,
-          x: 0,
-          opacity: 1,
-          ease: 'power2.out',
-          stagger: 0.05,
-        }),
-        id: "gallery-scrub-2",
-      });
     });
 
-    // Mobile specific animations if any
+    // Mobile: Batched Single-Pass Entrance Triggers for ultra-smooth 60fps scrolling
     mm.add("(max-width: 767px)", () => {
-      const items = gsap.utils.toArray<HTMLElement>('.skill-set > div:not(.no-gsap)', wrapper.current);
+      const mobileItems = gsap.utils.toArray<HTMLElement>(
+        '.gallery-item-card:not(.no-gsap)',
+        wrapper.current
+      );
 
-      items.forEach((item) => {
-        gsap.fromTo(item,
-          { y: 50, opacity: 0 },
-          {
+      gsap.set(mobileItems, { y: 24, opacity: 0, force3D: true });
+
+      ScrollTrigger.batch(mobileItems, {
+        start: "top 95%",
+        once: true,
+        onEnter: (batch) => {
+          gsap.to(batch, {
             y: 0,
             opacity: 1,
-            duration: 0.8,
-            scrollTrigger: {
-              trigger: item,
-              start: "top 95%",
-              toggleActions: "play none none none"
-            }
-          }
-        );
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "power2.out",
+            force3D: true,
+            clearProps: "transform,opacity",
+          });
+        },
       });
     });
 
-    // Safe delayed refresh to allow images/fonts/Next.js hydration layout to stabilize
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 150);
-
     return () => {
-      clearTimeout(timer);
       mm.revert();
     };
   }, { scope: wrapper });
-
 
   return (
     <div
       ref={wrapper}
       className="overflow-hidden transition-colors duration-500"
     >
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-gallery-section {
-            padding-top: clamp(2rem, 5vh, 4rem) !important;
-            padding-bottom: 0 !important;
-          }
-          .mobile-gallery-end-section {
-            padding-top: 0 !important;
-            padding-bottom: clamp(2rem, 5vh, 4rem) !important;
-          }
-          
-          .skill-set {
-            display: contents !important;
-          }
-          
-          .gallery-scroller-canvas {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 5.5rem !important;
-            padding: 4rem 1.5rem !important;
-            height: auto !important;
-          }
-          
-          .gallery-scroller-canvas img {
-            object-fit: cover !important;
-            object-position: center !important;
-          }
-
-          .gallery-item-1 > *:first-child,
-          .gallery-item-2 > *:first-child,
-          .gallery-item-3 > *:first-child,
-          .gallery-item-4 > *:first-child,
-          .gallery-item-5 > *:first-child,
-          .gallery-item-6 > *:first-child,
-          .gallery-item-7 > *:first-child,
-          .gallery-item-8 > *:first-child,
-          .gallery-item-9 > *:first-child {
-            position: absolute !important;
-            bottom: 100% !important;
-            left: 0 !important;
-            width: 100% !important;
-            margin-bottom: 0.4rem !important;
-            display: flex !important;
-            z-index: 30 !important;
-          }
-          
-          .gallery-item-1 {
-            order: 1 !important;
-            width: 65% !important;
-            height: 38vh !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-7 {
-            order: 2 !important;
-            width: 60% !important;
-            height: 34vh !important;
-            margin-left: auto !important;
-            margin-right: 0 !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-3 {
-            order: 3 !important;
-            width: 78% !important;
-            height: 42vh !important;
-            margin-left: 0 !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-text-1 {
-            order: 4 !important;
-            width: 90% !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 1rem !important;
-            margin-bottom: 1rem !important;
-            text-align: center !important;
-            transform: none !important;
-          }
-          .gallery-item-5 {
-            order: 5 !important;
-            width: 65% !important;
-            height: 38vh !important;
-            margin-left: auto !important;
-            margin-right: 0 !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-4 {
-            order: 6 !important;
-            width: 60% !important;
-            height: 34vh !important;
-            margin-left: 0 !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-6 {
-            order: 7 !important;
-            width: 70% !important;
-            height: 36vh !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-8 {
-            order: 8 !important;
-            width: 75% !important;
-            height: 40vh !important;
-            margin-left: auto !important;
-            margin-right: 0 !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-2 {
-            order: 9 !important;
-            width: 65% !important;
-            height: 34vh !important;
-            margin-left: 0 !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-9 {
-            order: 11 !important;
-            width: 70% !important;
-            height: 36vh !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-          .gallery-item-text-2 {
-            order: 10 !important;
-            width: 90% !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 1rem !important;
-            margin-bottom: 1rem !important;
-            text-align: center !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
       <div
         ref={scroller}
-        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent"
+        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[4.5rem] sm:max-md:gap-[5.5rem] max-md:py-16 sm:max-md:py-20 max-md:px-5 sm:max-md:px-8 max-md:h-auto max-md:w-full md:will-change-transform"
       >
-
-
         {/* SECTION 1 */}
-        <section className="skill-set mobile-gallery-section relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(3.5rem,10vw,6rem)] pb-20 md:py-0 flex flex-col md:block gap-32 md:gap-20">
-          <div className="gallery-item-1 relative md:absolute md:right-[600px] md:top-[150px] w-[80%] md:w-[25vw] h-[40vh] md:h-[35vh] ml-auto mt-8 md:mt-0">
-            <BoxReveal
-              align="justify-start md:justify-end"
-              className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">WE ARE IEEE</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560566447_akr6jp.avif"
-              alt="Image 1"
-              fill
-              className="z-0 translate-y-6 md:translate-y-0 object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
+        <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20 max-md:contents">
+          {SECTION_1_ITEMS.map((item) => (
+            <GalleryCardItem key={item.id} item={item} />
+          ))}
 
-          <div className="gallery-item-2 relative md:absolute md:right-[600px] md:bottom-[120px] w-[65%] md:w-[15vw] h-[35vh] md:h-[20vh] mr-auto">
-            <BoxReveal
-              align="justify-start"
-              className="md:translate-y-[-25px] md:absolute mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">VENOM, 2026</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560022208_0qc8i9.avif"
-              alt="Image 2"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-3 relative md:absolute md:right-[0px] md:bottom-[120px] w-[75%] md:w-[28vw] h-[45vh] md:h-[45vh] ml-auto">
-            <BoxReveal
-              align="justify-start"
-              className="md:translate-y-[-25px] md:absolute mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">HACKERZ STREET 4.0, 2026</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782561501835_is8g49.avif"
-              alt="Image 3"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-text-1 relative md:absolute md:right-[0px] md:top-[120px] w-full md:w-[28vw] pb-4 -translate-y-16 md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end">
+          {/* Text 1 */}
+          <div className="gallery-item-text-1 gallery-item-center relative md:absolute md:right-[0px] md:top-[120px] w-[90%] md:w-[28vw] md:translate-y-0 md:mt-0 md:pb-0 md:py-0 text-center md:text-right no-gsap flex flex-col items-center md:items-end mx-auto my-6 md:my-0 max-md:order-4 max-md:self-center max-md:py-6">
             <motion.div
               variants={textContainerVariants}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-10% 0px" }}
+              viewport={{ once: true, margin: "0px 0px -40px 0px" }}
               className="w-full flex flex-col items-center md:items-end"
             >
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">It doesn&apos;t matter where</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">It doesn&apos;t matter where</p>
               </BoxReveal>
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">you start, it&apos;s how you</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">you start, it&apos;s how you</p>
               </BoxReveal>
-              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit">
-                <p className="text-[#f9ba1f] text-[18px] md:text-[20px]">progress from there.</p>
+              <BoxReveal align="justify-center md:justify-end" boxColor="#f9ba1f" duration={2.5} widthClass="w-fit" viewportMargin="0px 0px -40px 0px">
+                <p className="text-[#f9ba1f] text-[16px] sm:text-[18px] md:text-[20px]">progress from there.</p>
               </BoxReveal>
             </motion.div>
           </div>
         </section>
 
         {/* SECTION 2 */}
-        <section className="skill-set mobile-gallery-end-section relative w-full md:w-screen h-auto md:h-full flex flex-col md:items-center md:justify-center px-6 md:px-12 py-20 md:py-0 gap-32 md:gap-20">
-          <div className="gallery-item-4 relative md:absolute md:left-[100px] md:top-[150px] w-[60%] md:w-[18vw] h-[35vh] md:h-[18vh] mr-auto">
-            <BoxReveal
-              align="justify-start"
-              className="md:translate-y-[-25px] md:absolute mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">HACKERZ STREET 4.0, 2026</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782565661341_zbz8t.webp"
-              alt="Image 4"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-5 relative md:absolute md:left-[180px] md:bottom-[180px] w-[80%] md:w-[27vw] h-[45vh] md:h-[27vh] ml-auto">
-            <BoxReveal
-              align="justify-end"
-              className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">Social Outreach, 2025</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560271203_88tlqb.avif"
-              alt="Image 5"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-6 relative md:absolute md:left-[670px] md:bottom-[80px] w-[70%] md:w-[25vw] h-[40vh] md:h-auto md:aspect-[16/9] mr-auto">
-            <BoxReveal
-              align="justify-start"
-              className="-translate-y-6 md:translate-y-[-25px] md:absolute mb-2 z-20"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">GENESIS 5.0, 2025</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571214276_nw4rqm.webp"
-              alt="Image 6"
-              fill
-              className="z-0 object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-7 relative md:absolute md:right-[720px] md:top-[180px] w-[65%] md:w-[20vw] h-[35vh] md:h-[20vh] ml-auto">
-            <BoxReveal
-              align="justify-end"
-              className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">Night Perm</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560416402_819ju.jpeg"
-              alt="Image 7"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          <div className="gallery-item-8 relative md:absolute md:right-[200px] md:top-[150px] w-[85%] md:w-[30vw] h-[55vh] md:h-auto md:aspect-[16/9] mr-auto">
-            <BoxReveal
-              align="justify-end"
-              className="md:translate-y-[-25px] md:absolute right-0 md:right-auto mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">IEEE CS, 2025</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782559824603_l6h16c.avif"
-              alt="Image 8"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
-
-          
-
-          <div className="gallery-item-9 relative md:absolute md:right-[40px] md:bottom-[130px] w-full md:w-[14vw] h-[40vh] md:h-[25vh]">
-            <BoxReveal
-              align="justify-start"
-              className="md:translate-y-[-25px] md:absolute mb-2"
-              widthClass="w-fit"
-              marginClass="my-0"
-              paddingClass="p-0"
-              boxColor="#f9ba1f"
-              duration={2.5}
-              standalone={true}
-            >
-              <p className="text-[#f9ba1f] text-[13px] md:text-[10px]">IEEE CCs SUMMIT, 2025</p>
-            </BoxReveal>
-            <Image
-              src="https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571207688_kxib06.webp"
-              alt="Image 9"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 70vw"
-              priority
-            />
-          </div>
+        <section className="skill-set relative w-full md:w-screen h-auto md:h-full flex flex-col md:items-center md:justify-center px-6 md:px-12 pt-0 pb-[clamp(2rem,5vh,4rem)] md:py-0 gap-32 md:gap-20 max-md:contents">
+          {SECTION_2_ITEMS.map((item) => (
+            <GalleryCardItem key={item.id} item={item} />
+          ))}
         </section>
-
       </div>
     </div>
   );

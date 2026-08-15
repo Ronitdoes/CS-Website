@@ -3,19 +3,18 @@
 import dynamic from "next/dynamic";
 const TeamsInfoComponent = dynamic(() => import("@/components/common/TeamsInfoComponent"), { ssr: false });
 import { useState, useEffect, useRef } from "react";
-const TeamCard = dynamic(() => import("@/app/team/TeamCard"), { ssr: false });
 const HorizontalGallery = dynamic(() => import("@/app/gallery/HorizontalGallery"), { ssr: false });
 const CardStack = dynamic(() => import("@/components/common/CardStack"), { ssr: false });
 const ProjectCard = dynamic(() => import("@/components/common/ProjectCard"), { ssr: false });
 const LandingText = dynamic(() => import("@/components/common/LandingText"), { ssr: false });
 const HeroImageSequence = dynamic(() => import("@/components/common/HeroImageSequence"), { ssr: false });
-import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
 import { useLoading } from "@/context/LoadingContext";
+import { useLenis } from "@/components/providers/ScrollProvider";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-//const NewComponent = dynamic(() => import("@/components/common/newComponent"),{ ssr: false });
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LineBackground from "@/components/LineBackground";
-import ScrollVelocity from "@/components/ScrollVelocity";
+const ScrollVelocity = dynamic(() => import("@/components/ScrollVelocity"), { ssr: false });
 
 const FAQ = dynamic(() => import("@/components/FAQ"), { ssr: false });
 const Newsletter = dynamic(() => import("@/components/Newsletter"), { ssr: false });
@@ -36,11 +35,100 @@ const TOTAL_INTRO = HELLO_LANGUAGES.length * WORD_DURATION + 1000;
 
 export default function Home() {
   const { isReady } = useLoading();
+  const lenis = useLenis();
   const [startIntro, setStartIntro] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const heroPinRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
+
+  // Lock scroll completely while the intro greeting section is active
+  useEffect(() => {
+    if (showIntro) {
+      lenis?.stop();
+      lenis?.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
+
+      // Disable GSAP normalizer if active
+      const normalizer = ScrollTrigger.normalizeScroll();
+      if (normalizer) {
+        normalizer.disable();
+      }
+
+      // Hard freeze page scroll styles
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = "0px";
+      document.body.style.left = "0px";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+
+      const preventScroll = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      };
+
+      const preventScrollKeys = (e: KeyboardEvent) => {
+        if (
+          ["Space", "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(
+            e.code
+          )
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+        }
+      };
+
+      // Capture phase listeners ensure no component or library receives scroll events
+      window.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      window.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      document.addEventListener("wheel", preventScroll, { passive: false, capture: true });
+      document.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
+      window.addEventListener("keydown", preventScrollKeys, { passive: false, capture: true });
+      document.addEventListener("keydown", preventScrollKeys, { passive: false, capture: true });
+
+      return () => {
+        window.removeEventListener("wheel", preventScroll, { capture: true });
+        window.removeEventListener("touchmove", preventScroll, { capture: true });
+        document.removeEventListener("wheel", preventScroll, { capture: true });
+        document.removeEventListener("touchmove", preventScroll, { capture: true });
+        window.removeEventListener("keydown", preventScrollKeys, { capture: true });
+        document.removeEventListener("keydown", preventScrollKeys, { capture: true });
+
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.width = "";
+        document.body.style.height = "";
+
+        if (normalizer) {
+          normalizer.enable();
+        }
+        lenis?.start();
+        ScrollTrigger.refresh();
+      };
+    } else {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.width = "";
+      document.body.style.height = "";
+
+      const normalizer = ScrollTrigger.normalizeScroll();
+      if (normalizer) {
+        normalizer.enable();
+      }
+      lenis?.start();
+      ScrollTrigger.refresh();
+    }
+  }, [showIntro, lenis, isReady]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -61,12 +149,10 @@ export default function Home() {
 
     const tl = gsap.timeline({
       onComplete: () => {
-        // Cinematic lens focus fade-out: slight expansion, backdrop-blur fade-out, and opacity fade
+        // GPU-composited fade-out: smooth expansion and opacity fade
         gsap.to(introRef.current, {
           opacity: 0,
           scale: 1.03,
-          backdropFilter: "blur(0px)",
-          webkitBackdropFilter: "blur(0px)",
           duration: 0.65,
           ease: "power3.inOut",
           onComplete: () => {
@@ -128,8 +214,7 @@ export default function Home() {
   }, { dependencies: [startIntro], scope: introRef });
 
   return (
-    
-    <SmoothScrollProvider>
+    <>
       <div className="fixed inset-0 -z-10">
         <LineBackground
           lineColor="rgba(180, 140, 60, 0.75)"
@@ -143,7 +228,7 @@ export default function Home() {
       {/* Pinning Wrapper for Hero Section */}
       <div ref={heroPinRef} className="relative h-[200vh] z-10">
         <div
-          className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center"
+          className="sticky top-0 h-screen h-[100dvh] w-full overflow-hidden flex items-center justify-center"
           style={{
             willChange: 'transform',
             backfaceVisibility: 'hidden',
@@ -170,23 +255,21 @@ export default function Home() {
       {showIntro ? (
         <div
           ref={introRef}
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md md:backdrop-blur-xl touch-none select-none"
           style={{ 
-            willChange: "transform, opacity, filter",
-            backgroundColor: "rgba(0, 0, 0, 0.45)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            willChange: "transform, opacity",
+            backgroundColor: "rgba(0, 0, 0, 0.55)",
           }}
         >
           {/* Vertical mask viewport to clip sliding text */}
-          <div className="text-center overflow-hidden h-[120px] flex items-center justify-center">
+          <div className="text-center overflow-hidden h-[120px] flex items-center justify-center pointer-events-none">
             <span
               ref={textRef}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-white block select-none"
               style={{
                 fontFamily:
                   "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif",
-                willChange: "transform, opacity, filter",
+                willChange: "transform, opacity",
                 opacity: 1,
                 transform: "translate3d(0, 0px, 0)",
               }}
@@ -228,6 +311,6 @@ export default function Home() {
 
         <div><FAQ/></div>
 
-    </SmoothScrollProvider>
+    </>
   );
 }

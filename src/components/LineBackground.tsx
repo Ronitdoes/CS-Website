@@ -18,99 +18,259 @@ export default function TopographicBackground({
   animated = true,
 }: TopographicBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animFrameRef = useRef<number>(0);
-  const timeRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const isTransparent =
+      backgroundColor === "transparent" ||
+      backgroundColor === "rgba(0,0,0,0)" ||
+      backgroundColor === "none";
+
+    const ctx = canvas.getContext("2d", { alpha: isTransparent });
     if (!ctx) return;
 
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    };
+    let width = 0;
+    let height = 0;
+    let lastRenderedWidth = 0;
+    let lastRenderedHeight = 0;
+    let dpr = 1;
+    let animFrameId = 0;
+    let time = 0;
+    let lastTime = 0;
+    let isVisible = true;
+    let isIntersecting = true;
+    let isRunning = false;
 
-    resize();
-    window.addEventListener("resize", resize);
+    // Grid and precomputed data
+    let cols = 0;
+    let rows = 0;
+    let cellW = 0;
+    let cellH = 0;
+    let rowStride = 0;
+    let activeLineCount = lineCount;
+    let minV = -0.85;
+    let maxV = 0.85;
+    let scaleX = 250;
+    let scaleY = 250;
+    let currentLineWidth = 0.2;
 
-    const noise = (x: number, y: number, t: number): number => {
-      return (
-        Math.sin(x * 0.8 + t * 0.12) * Math.cos(y * 0.6 + t * 0.09) * 0.4 +
-        Math.sin(x * 0.4 - y * 0.5 + t * 0.07) * 0.3 +
-        Math.cos(x * 1.1 + y * 0.9 - t * 0.11) * 0.2 +
-        Math.sin(x * 0.25 + y * 0.3 + t * 0.05) * 0.1
-      );
-    };
+    // Pre-allocated typed buffers (reused across frames to eliminate GC)
+    let field = new Float32Array(0);
+    let colK1 = new Float32Array(0);
+    let colS2 = new Float32Array(0);
+    let colC2 = new Float32Array(0);
+    let colC3 = new Float32Array(0);
+    let colS3 = new Float32Array(0);
+    let colS4 = new Float32Array(0);
+    let colC4 = new Float32Array(0);
 
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const activeLineCount = isMobile ? 4 : lineCount;
+    let rowC2 = new Float32Array(0);
+    let rowS2 = new Float32Array(0);
+    let rowC3 = new Float32Array(0);
+    let rowS3 = new Float32Array(0);
+    let rowC4 = new Float32Array(0);
+    let rowS4 = new Float32Array(0);
 
-    const W = () => canvas.offsetWidth;
-    const H = () => canvas.offsetHeight;
+    let thresholds = new Float32Array(0);
+    let invStep = 0;
 
-    const drawContours = (t: number) => {
-      const w = W();
-      const h = H();
+    const updateDimensions = (force = false) => {
+      const currentW = canvas.offsetWidth;
+      const currentH = canvas.offsetHeight;
+      if (currentW === 0 || currentH === 0) return;
 
-      ctx.clearRect(0, 0, w, h);
-      if (backgroundColor !== "transparent") {
-          ctx.fillStyle = backgroundColor;
-          ctx.fillRect(0, 0, w, h);
+      const isMobile =
+        window.innerWidth < 768 ||
+        (window.innerHeight < 500 && window.matchMedia("(pointer: coarse)").matches);
+
+      // On mobile devices, vertical scrolling collapses/expands the browser toolbar by ~50-80px.
+      // Avoid resetting canvas buffer and reallocating arrays unless width changes or height changes significantly (e.g. orientation flip).
+      if (
+        !force &&
+        isMobile &&
+        currentW === lastRenderedWidth &&
+        Math.abs(currentH - lastRenderedHeight) < 120
+      ) {
+        return;
       }
 
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = 0.2;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      lastRenderedWidth = currentW;
+      lastRenderedHeight = currentH;
+      width = currentW;
+      height = currentH;
 
-      // Create a responsive grid so the topographic lines are never stretched
-      const maxDim = Math.max(w, h);
-      const cellSize = Math.max(20, maxDim / 100); 
-      
-      const cols = Math.ceil(w / cellSize);
-      const rows = Math.ceil(h / cellSize);
-      const cellW = w / cols;
-      const cellH = h / rows;
+      // Desktop: 1.25 clamp. Mobile: 1.0 for peak 60fps fill-rate performance.
+      dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.25);
 
-      const field: number[][] = [];
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Desktop: untouched (lineCount). Mobile: rich line density (up to 12 lines).
+      activeLineCount = isMobile ? Math.min(lineCount, 12) : lineCount;
+
+      // Desktop: untouched 250. Mobile: 150/160 for natural wave frequency on portrait screens.
+      scaleX = isMobile ? 150 : 250;
+      scaleY = isMobile ? 160 : 250;
+
+      // Desktop: untouched [-0.85, 0.85]. Mobile: [-0.68, 0.68] so all lines cross active variance.
+      minV = isMobile ? -0.68 : -0.85;
+      maxV = isMobile ? 0.68 : 0.85;
+
+      // Desktop: untouched 0.2. Mobile: 0.4 for delicate and crisp visibility on high-DPI screens.
+      currentLineWidth = isMobile ? 0.4 : 0.2;
+
+      // Desktop: untouched. Mobile: smooth cell size ~18-20px.
+      const maxDim = Math.max(width, height);
+      const cellSize = isMobile
+        ? Math.max(16, Math.min(width, height) / 22)
+        : Math.max(22, maxDim / 90);
+
+      cols = Math.ceil(width / cellSize);
+      rows = Math.ceil(height / cellSize);
+      cellW = width / cols;
+      cellH = height / rows;
+      rowStride = cols + 1;
+
+      const totalGridPoints = (rows + 1) * rowStride;
+      if (field.length < totalGridPoints) {
+        field = new Float32Array(totalGridPoints);
+      }
+
+      // Column buffers
+      if (colK1.length < cols + 1) {
+        colK1 = new Float32Array(cols + 1);
+        colS2 = new Float32Array(cols + 1);
+        colC2 = new Float32Array(cols + 1);
+        colC3 = new Float32Array(cols + 1);
+        colS3 = new Float32Array(cols + 1);
+        colS4 = new Float32Array(cols + 1);
+        colC4 = new Float32Array(cols + 1);
+      }
+
+      // Row static buffers (independent of time t)
+      if (rowC2.length < rows + 1) {
+        rowC2 = new Float32Array(rows + 1);
+        rowS2 = new Float32Array(rows + 1);
+        rowC3 = new Float32Array(rows + 1);
+        rowS3 = new Float32Array(rows + 1);
+        rowC4 = new Float32Array(rows + 1);
+        rowS4 = new Float32Array(rows + 1);
+      }
+
       for (let j = 0; j <= rows; j++) {
-        field[j] = [];
+        const ny = (j * cellH) / scaleY;
+        rowC2[j] = Math.cos(ny * 0.5);
+        rowS2[j] = Math.sin(ny * 0.5);
+        rowC3[j] = Math.cos(ny * 0.9);
+        rowS3[j] = Math.sin(ny * 0.9);
+        rowC4[j] = Math.cos(ny * 0.3);
+        rowS4[j] = Math.sin(ny * 0.3);
+      }
+
+      // Thresholds buffer
+      if (thresholds.length !== activeLineCount) {
+        thresholds = new Float32Array(activeLineCount);
+      }
+      const step = activeLineCount > 1 ? (maxV - minV) / (activeLineCount - 1) : 1;
+      invStep = activeLineCount > 1 ? 1 / step : 0;
+      for (let c = 0; c < activeLineCount; c++) {
+        thresholds[c] = minV + c * step;
+      }
+    };
+
+    const drawContours = (t: number) => {
+      const w = width;
+      const h = height;
+      if (w === 0 || h === 0 || cols === 0 || rows === 0) return;
+
+      if (!isTransparent) {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, w, h);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+
+      // Precompute 1D column values for time t
+      for (let i = 0; i <= cols; i++) {
+        const nx = (i * cellW) / scaleX;
+        colK1[i] = 0.4 * Math.sin(nx * 0.8 + t * 0.12);
+
+        const u2 = nx * 0.4 + t * 0.07;
+        colS2[i] = 0.3 * Math.sin(u2);
+        colC2[i] = 0.3 * Math.cos(u2);
+
+        const u3 = nx * 1.1 - t * 0.11;
+        colC3[i] = 0.2 * Math.cos(u3);
+        colS3[i] = 0.2 * Math.sin(u3);
+
+        const u4 = nx * 0.25 + t * 0.05;
+        colS4[i] = 0.1 * Math.sin(u4);
+        colC4[i] = 0.1 * Math.cos(u4);
+      }
+
+      // Compute scalar field using separable components (pure arithmetic in inner loop)
+      for (let j = 0; j <= rows; j++) {
+        const rowOffset = j * rowStride;
+        const ny = (j * cellH) / scaleY;
+        const r1 = Math.cos(ny * 0.6 + t * 0.09);
+        const c2 = rowC2[j], s2 = rowS2[j];
+        const c3 = rowC3[j], s3 = rowS3[j];
+        const c4 = rowC4[j], s4 = rowS4[j];
+
         for (let i = 0; i <= cols; i++) {
-          // Base the noise coordinates on the physical screen size 
-          // so the noise scale remains constantly proportioned
-          const nx = (i * cellW) / 250;
-          const ny = (j * cellH) / 250;
-          field[j][i] = noise(nx, ny, t);
+          field[rowOffset + i] =
+            colK1[i] * r1 +
+            (colS2[i] * c2 - colC2[i] * s2) +
+            (colC3[i] * c3 - colS3[i] * s3) +
+            (colS4[i] * c4 + colC4[i] * s4);
         }
       }
 
-      const minV = -0.85;
-      const maxV = 0.85;
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = currentLineWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      for (let c = 0; c < activeLineCount; c++) {
-        const threshold = minV + ((maxV - minV) * c) / (activeLineCount - 1);
+      ctx.beginPath();
 
-        ctx.beginPath();
+      // Single-pass Marching Squares with cell min/max threshold filtering
+      for (let j = 0; j < rows; j++) {
+        const r0 = j * rowStride;
+        const r1 = (j + 1) * rowStride;
+        const y0 = j * cellH;
+        const y1 = y0 + cellH;
 
-        for (let j = 0; j < rows; j++) {
-          for (let i = 0; i < cols; i++) {
-            const v00 = field[j][i];
-            const v10 = field[j][i + 1];
-            const v01 = field[j + 1][i];
-            const v11 = field[j + 1][i + 1];
+        for (let i = 0; i < cols; i++) {
+          const v00 = field[r0 + i];
+          const v10 = field[r0 + i + 1];
+          const v01 = field[r1 + i];
+          const v11 = field[r1 + i + 1];
 
-            const x0 = i * cellW;
-            const y0 = j * cellH;
-            const x1 = x0 + cellW;
-            const y1 = y0 + cellH;
+          let minVal = v00 < v10 ? v00 : v10;
+          if (v01 < minVal) minVal = v01;
+          if (v11 < minVal) minVal = v11;
 
-            const lerp = (a: number, b: number, va: number, vb: number) =>
-              a + ((b - a) * (threshold - va)) / (vb - va);
+          let maxVal = v00 > v10 ? v00 : v10;
+          if (v01 > maxVal) maxVal = v01;
+          if (v11 > maxVal) maxVal = v11;
 
+          if (maxVal < minV || minVal > maxV) continue;
+
+          let cStart = Math.floor((minVal - minV) * invStep);
+          if (cStart < 0) cStart = 0;
+          let cEnd = Math.ceil((maxVal - minV) * invStep);
+          if (cEnd >= activeLineCount) cEnd = activeLineCount - 1;
+
+          if (cStart > cEnd) continue;
+
+          const x0 = i * cellW;
+          const x1 = x0 + cellW;
+
+          for (let c = cStart; c <= cEnd; c++) {
+            const threshold = thresholds[c];
             const idx =
               (v00 > threshold ? 8 : 0) |
               (v10 > threshold ? 4 : 0) |
@@ -119,53 +279,229 @@ export default function TopographicBackground({
 
             if (idx === 0 || idx === 15) continue;
 
-            const top = { x: lerp(x0, x1, v00, v10), y: y0 };
-            const right = { x: x1, y: lerp(y0, y1, v10, v11) };
-            const bottom = { x: lerp(x0, x1, v01, v11), y: y1 };
-            const left = { x: x0, y: lerp(y0, y1, v00, v01) };
-
-            const segments: Array<[{ x: number; y: number }, { x: number; y: number }]> = [];
-
             switch (idx) {
-              case 1:  segments.push([bottom, left]); break;
-              case 2:  segments.push([right, bottom]); break;
-              case 3:  segments.push([right, left]); break;
-              case 4:  segments.push([top, right]); break;
-              case 5:  segments.push([top, left]); segments.push([right, bottom]); break;
-              case 6:  segments.push([top, bottom]); break;
-              case 7:  segments.push([top, left]); break;
-              case 8:  segments.push([left, top]); break;
-              case 9:  segments.push([bottom, top]); break;
-              case 10: segments.push([left, bottom]); segments.push([top, right]); break;
-              case 11: segments.push([right, top]); break;
-              case 12: segments.push([left, right]); break;
-              case 13: segments.push([bottom, right]); break;
-              case 14: segments.push([left, bottom]); break;
-            }
-
-            for (const [from, to] of segments) {
-              ctx.moveTo(from.x, from.y);
-              ctx.lineTo(to.x, to.y);
+              case 1: {
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(x0, leftY);
+                break;
+              }
+              case 2: {
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(bottomX, y1);
+                break;
+              }
+              case 3: {
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(x0, leftY);
+                break;
+              }
+              case 4: {
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x1, rightY);
+                break;
+              }
+              case 5: {
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x0, leftY);
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(bottomX, y1);
+                break;
+              }
+              case 6: {
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(bottomX, y1);
+                break;
+              }
+              case 7: {
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x0, leftY);
+                break;
+              }
+              case 8: {
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(topX, y0);
+                break;
+              }
+              case 9: {
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(topX, y0);
+                break;
+              }
+              case 10: {
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(bottomX, y1);
+                ctx.moveTo(topX, y0);
+                ctx.lineTo(x1, rightY);
+                break;
+              }
+              case 11: {
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                const topX = x0 + cellW * ((threshold - v00) / (v10 - v00));
+                ctx.moveTo(x1, rightY);
+                ctx.lineTo(topX, y0);
+                break;
+              }
+              case 12: {
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(x1, rightY);
+                break;
+              }
+              case 13: {
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                const rightY = y0 + cellH * ((threshold - v10) / (v11 - v10));
+                ctx.moveTo(bottomX, y1);
+                ctx.lineTo(x1, rightY);
+                break;
+              }
+              case 14: {
+                const leftY = y0 + cellH * ((threshold - v00) / (v01 - v00));
+                const bottomX = x0 + cellW * ((threshold - v01) / (v11 - v01));
+                ctx.moveTo(x0, leftY);
+                ctx.lineTo(bottomX, y1);
+                break;
+              }
             }
           }
         }
+      }
 
-        ctx.stroke();
-        ctx.beginPath();
+      ctx.stroke();
+    };
+
+    let prefersReducedMotion = false;
+    if (typeof window !== "undefined") {
+      prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    const startAnimation = () => {
+      if (isRunning || !animated || prefersReducedMotion) return;
+      isRunning = true;
+      lastTime = 0;
+      animFrameId = requestAnimationFrame(animate);
+    };
+
+    const stopAnimation = () => {
+      if (!isRunning) return;
+      isRunning = false;
+      cancelAnimationFrame(animFrameId);
+      lastTime = 0;
+    };
+
+    const animate = (now: number) => {
+      if (!isVisible || !isIntersecting || prefersReducedMotion) {
+        isRunning = false;
+        lastTime = 0;
+        return;
+      }
+
+      if (lastTime === 0) lastTime = now;
+      const delta = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      time += delta * 2.6;
+      drawContours(time);
+
+      animFrameId = requestAnimationFrame(animate);
+    };
+
+    const handleResize = () => {
+      updateDimensions(false);
+      drawContours(time);
+    };
+
+    updateDimensions(true);
+    drawContours(time);
+
+    if (animated && !prefersReducedMotion) {
+      startAnimation();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isVisible = false;
+        stopAnimation();
+      } else {
+        isVisible = true;
+        if (isIntersecting && animated && !prefersReducedMotion) {
+          startAnimation();
+        }
       }
     };
 
-    const animate = () => {
-      timeRef.current += animated ? 0.04 : 0;
-      drawContours(timeRef.current);
-      animFrameRef.current = requestAnimationFrame(animate);
+    let motionMediaQuery: MediaQueryList | null = null;
+    const handleMotionChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+      if (prefersReducedMotion) {
+        stopAnimation();
+        drawContours(time);
+      } else if (isVisible && isIntersecting && animated) {
+        startAnimation();
+      }
     };
 
-    animate();
+    if (typeof window !== "undefined") {
+      motionMediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      motionMediaQuery.addEventListener("change", handleMotionChange);
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(canvas);
+    }
+
+    let intersectionObserver: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        isIntersecting = entry ? entry.isIntersecting : true;
+        if (isIntersecting && isVisible && animated && !prefersReducedMotion) {
+          startAnimation();
+        } else if (!isIntersecting) {
+          stopAnimation();
+        }
+      });
+      intersectionObserver.observe(canvas);
+    }
 
     return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animFrameRef.current);
+      stopAnimation();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("resize", handleResize);
+      if (motionMediaQuery) motionMediaQuery.removeEventListener("change", handleMotionChange);
+      if (resizeObserver) resizeObserver.disconnect();
+      if (intersectionObserver) intersectionObserver.disconnect();
     };
   }, [lineColor, backgroundColor, lineCount, animated]);
 
@@ -173,11 +509,20 @@ export default function TopographicBackground({
     <canvas
       ref={canvasRef}
       className={`block ${className}`}
-      style={{ background: backgroundColor, width: "100%", height: "100%", display: "block" }}
+      style={{
+        background: backgroundColor,
+        width: "100%",
+        height: "100%",
+        display: "block",
+        pointerEvents: "none",
+        touchAction: "none",
+        contain: "strict",
+        willChange: "transform",
+        transform: "translate3d(0, 0, 0)",
+      }}
     />
   );
 }
-
 
 export function TopographicDemo() {
   return (

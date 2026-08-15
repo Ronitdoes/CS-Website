@@ -275,7 +275,7 @@ export default function Footer() {
                 <div className={styles.terminal}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.20rem', color: '#9ca3af' }}>
                     <span style={{ color: '#f97316', fontWeight: 'bold', fontSize: '1rem' }}>$</span>
-                    <span>© 2024 IEEE CS MUJ. All systems operational.</span>
+                    <span>© 2026 IEEE CS MUJ. All systems operational.</span>
                     <span className="animate-pulse" style={{ color: '#f97316' }}>_</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.20rem', color: '#6b7280' }}>

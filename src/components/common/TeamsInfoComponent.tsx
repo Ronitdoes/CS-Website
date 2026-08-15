@@ -1,63 +1,11 @@
 "use client";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useInView } from "framer-motion";
 import TVComponent from "./TVComponent";
 
-
-function easeOutExpo(x: number) {
+function easeOutExpo(x: number): number {
   return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
 }
-
-
-interface CountUpProps {
-  to: number;
-  from?: number;
-  delay?: number;    // seconds
-  duration?: number; // ms
-  separator?: string;
-}
-
-function CountUp({ to, from = 0, delay = 0, duration = 1400, separator = "", start = true }: CountUpProps & { start?: boolean }) {
-  const ref = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (!start) return;
-
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    if (isMobile) {
-      if (ref.current) {
-        ref.current.textContent = separator ? to.toLocaleString("en-US") : String(to);
-      }
-      return;
-    }
-
-    if (ref.current) ref.current.textContent = String(from);
-
-    let rafId = 0;
-    const startTime = performance.now() + delay * 1000;
-
-    function tick(now: number) {
-      const elapsed = now - startTime;
-      if (elapsed < 0) { rafId = requestAnimationFrame(tick); return; }
-      const p = Math.min(elapsed / duration, 1);
-      const val = Math.round(easeOutExpo(p) * (to - from) + from);
-      if (ref.current) {
-        ref.current.textContent = separator ? val.toLocaleString("en-US") : String(val);
-      }
-      if (p < 1) {
-        rafId = requestAnimationFrame(tick);
-      } else if (ref.current) {
-        ref.current.textContent = separator ? to.toLocaleString("en-US") : String(to);
-      }
-    }
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [to, from, delay, duration, separator, start]);
-
-  return <span ref={ref} />;
-}
-
 
 const STATS = [
   { label: "Members",   value: 1500, ticks: 15, delay: 0    },
@@ -66,6 +14,31 @@ const STATS = [
   { label: "Mentors",   value: 10,   ticks: 5,  delay: 0.45 },
 ] as const;
 
+const TITLE_STYLE_1: React.CSSProperties = {
+  fontFamily: "'Playfair Display', serif",
+  fontWeight: 900,
+  background: "linear-gradient(to right, #ffffff, #f9ba1f)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  lineHeight: 1.15,
+  paddingBottom: "0.15em",
+  letterSpacing: "-0.03em",
+  margin: 0,
+};
+
+const TITLE_STYLE_2: React.CSSProperties = {
+  ...TITLE_STYLE_1,
+  marginTop: "10px",
+};
+
+const GLOW_LINE_STYLE: React.CSSProperties = {
+  width: "40px",
+  height: "3px",
+  backgroundColor: "#ffffff",
+  boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
+  borderRadius: "999px",
+  marginTop: "15px",
+};
 
 function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,12 +46,19 @@ function ParticleCanvas() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    let W = 0, H = 0, raf = 0;
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
+
+    let W = 0;
+    let H = 0;
+    let dpr = 1;
+    let raf = 0;
+    let isVisible = false;
 
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     const particleCount = isMobile ? 18 : 60;
     const maxDistance = isMobile ? 80 : 120;
+    const maxDistanceSq = maxDistance * maxDistance;
 
     const pts = Array.from({ length: particleCount }, () => ({
       x: Math.random(),
@@ -90,59 +70,126 @@ function ParticleCanvas() {
     }));
 
     function resize() {
-      W = canvas!.width = canvas!.offsetWidth;
-      H = canvas!.height = canvas!.offsetHeight;
-      if (isMobile) {
+      if (!canvas) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.offsetWidth;
+      H = canvas.offsetHeight;
+      if (W === 0 || H === 0) return;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (isMobile && isVisible) {
         draw();
       }
     }
 
     function draw() {
-      if (!W) { 
-        if (!isMobile) raf = requestAnimationFrame(draw); 
-        return; 
-      }
+      if (!isVisible || !W || !H || !ctx) return;
+
       ctx.clearRect(0, 0, W, H);
 
-      pts.forEach((p) => {
+      // Draw all particle dots
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
         if (!isMobile) {
           p.x = (p.x + p.vx + 1) % 1;
           p.y = (p.y + p.vy + 1) % 1;
         }
+        const px = p.x * W;
+        const py = p.y * H;
         ctx.beginPath();
-        ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
+        ctx.arc(px, py, p.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${p.o})`;
         ctx.fill();
-      });
+      }
 
+      // Batch connecting lines into single stroke path
+      ctx.beginPath();
       for (let i = 0; i < pts.length; i++) {
+        const p1 = pts[i];
+        const p1x = p1.x * W;
+        const p1y = p1.y * H;
         for (let j = i + 1; j < pts.length; j++) {
-          const dx = (pts[i].x - pts[j].x) * W;
-          const dy = (pts[i].y - pts[j].y) * H;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < maxDistance) {
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x * W, pts[i].y * H);
-            ctx.lineTo(pts[j].x * W, pts[j].y * H);
-            ctx.strokeStyle = `rgba(255,255,255,${0.04 * (1 - d / maxDistance)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+          const p2 = pts[j];
+          const p2x = p2.x * W;
+          const dx = p1x - p2x;
+          if (Math.abs(dx) >= maxDistance) continue;
+
+          const p2y = p2.y * H;
+          const dy = p1y - p2y;
+          if (Math.abs(dy) >= maxDistance) continue;
+
+          const dsq = dx * dx + dy * dy;
+          if (dsq < maxDistanceSq) {
+            ctx.moveTo(p1x, p1y);
+            ctx.lineTo(p2x, p2y);
           }
         }
       }
-      
-      if (!isMobile) {
+      ctx.strokeStyle = "rgba(255,255,255,0.025)";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+
+      if (!isMobile && isVisible) {
         raf = requestAnimationFrame(draw);
       }
     }
 
     resize();
-    window.addEventListener("resize", resize);
-    raf = requestAnimationFrame(draw);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && canvas.parentElement) {
+      resizeObserver = new ResizeObserver(() => {
+        resize();
+      });
+      resizeObserver.observe(canvas.parentElement);
+    } else {
+      window.addEventListener("resize", resize, { passive: true });
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting && !document.hidden;
+        cancelAnimationFrame(raf);
+        if (isVisible) {
+          if (isMobile) {
+            draw();
+          } else {
+            raf = requestAnimationFrame(draw);
+          }
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(canvas);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        isVisible = false;
+        cancelAnimationFrame(raf);
+      } else if (canvasRef.current) {
+        isVisible = true;
+        cancelAnimationFrame(raf);
+        if (isMobile) {
+          draw();
+        } else {
+          raf = requestAnimationFrame(draw);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      if (!isMobile) cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      observer.disconnect();
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener("resize", resize);
+      }
+      document.removeEventListener("visibilitychange", handleVisibility);
+      cancelAnimationFrame(raf);
     };
   }, []);
 
@@ -153,7 +200,6 @@ function ParticleCanvas() {
     />
   );
 }
-
 
 function StatCell({
   label,
@@ -168,11 +214,11 @@ function StatCell({
   delay: number;
   index: number;
 }) {
-  const isRight = index % 2 !== 0;
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.3 });
   const tickRefs = useRef<(HTMLDivElement | null)[]>([]);
   const revealRef = useRef<HTMLDivElement>(null);
+  const numRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!isInView) return;
@@ -183,10 +229,17 @@ function StatCell({
         revealRef.current.style.transform = "scaleX(0)";
         revealRef.current.style.display = "none";
       }
+      if (numRef.current) {
+        numRef.current.textContent = value.toLocaleString("en-US");
+      }
       tickRefs.current.forEach((t) => {
         if (t) t.style.background = "#ffffff";
       });
       return;
+    }
+
+    if (numRef.current) {
+      numRef.current.textContent = "0";
     }
 
     const revealTimeout = setTimeout(() => {
@@ -198,32 +251,59 @@ function StatCell({
     const duration = 1400;
     const startTime = performance.now() + delay * 1000;
     let rafId = 0;
+    let lastActiveTick = -1;
 
-    function animTicks(now: number) {
+    function animate(now: number) {
       const elapsed = now - startTime;
-      if (elapsed < 0) { rafId = requestAnimationFrame(animTicks); return; }
+      if (elapsed < 0) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
+
       const p = Math.min(elapsed / duration, 1);
       const e = easeOutExpo(p);
+
+      // Update number text smoothly without React re-render
+      const currentVal = Math.round(e * value);
+      if (numRef.current) {
+        numRef.current.textContent = currentVal.toLocaleString("en-US");
+      }
+
+      // Update tick lights only on incremental index change
       const activeTick = Math.floor(e * ticks);
-      tickRefs.current.forEach((t, idx) => {
-        if (!t) return;
-        t.style.background = idx <= activeTick ? "#ffffff" : "rgba(255,255,255,0.15)";
-      });
-      if (p < 1) rafId = requestAnimationFrame(animTicks);
-      else tickRefs.current.forEach((t) => { if (t) t.style.background = "#ffffff"; });
+      if (activeTick !== lastActiveTick) {
+        for (let idx = Math.max(0, lastActiveTick); idx <= activeTick && idx < ticks; idx++) {
+          const t = tickRefs.current[idx];
+          if (t) t.style.background = "#ffffff";
+        }
+        lastActiveTick = activeTick;
+      }
+
+      if (p < 1) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        if (numRef.current) {
+          numRef.current.textContent = value.toLocaleString("en-US");
+        }
+        tickRefs.current.forEach((t) => {
+          if (t) t.style.background = "#ffffff";
+        });
+      }
     }
 
-    rafId = requestAnimationFrame(animTicks);
+    rafId = requestAnimationFrame(animate);
 
     return () => {
       clearTimeout(revealTimeout);
       cancelAnimationFrame(rafId);
     };
-  }, [delay, ticks, isInView]);
+  }, [delay, ticks, value, isInView]);
 
   return (
-    <div ref={containerRef} className={`relative border-b border-white/[0.06] border-r p-2 md:p-10 group transition-colors duration-300 hover:bg-white/[0.02] [&:nth-child(2)]:border-r-0 [&:nth-child(4)]:border-r-0 md:[&:nth-child(2)]:border-r-0 md:[&:nth-child(4)]:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0 md:[&:nth-child(3)]:border-b-0 md:[&:nth-child(4)]:border-b-0 flex flex-col items-center text-center md:items-start md:text-left px-4 md:px-10`}>
-
+    <div
+      ref={containerRef}
+      className="relative border-b border-white/[0.06] border-r p-2 md:p-10 group transition-colors duration-300 hover:bg-white/[0.02] [&:nth-child(2)]:border-r-0 [&:nth-child(4)]:border-r-0 md:[&:nth-child(2)]:border-r-0 md:[&:nth-child(4)]:border-r-0 [&:nth-child(3)]:border-b-0 [&:nth-child(4)]:border-b-0 md:[&:nth-child(3)]:border-b-0 md:[&:nth-child(4)]:border-b-0 flex flex-col items-center text-center md:items-start md:text-left px-4 md:px-10"
+    >
       <div
         ref={revealRef}
         className="absolute inset-0 bg-white/[0.03] origin-left z-10 pointer-events-none"
@@ -248,14 +328,7 @@ function StatCell({
           className="font-black text-white tracking-[-2px] md:tracking-[-4px] leading-none tabular-nums"
           style={{ fontSize: "clamp(44px, 9vw, 120px)" }}
         >
-          <CountUp
-            to={value}
-            from={0}
-            delay={delay}
-            duration={1400}
-            separator=","
-            start={isInView}
-          />
+          <span ref={numRef} />
         </div>
         <span
           className="font-black text-white/40 leading-none"
@@ -281,63 +354,18 @@ function StatCell({
   );
 }
 
-
 export default function TeamsInfoComponent() {
   return (
-    <div className="mobile-teams-info-section relative min-h-screen py-20 lg:py-0 lg:h-screen flex flex-col lg:flex-row items-center justify-center overflow-x-hidden lg:overflow-hidden">
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-teams-info-section {
-            padding-bottom: clamp(3rem, 8vh, 5rem) !important;
-          }
-        }
-      `}</style>
-
+    <div className="relative min-h-screen py-20 pb-[clamp(3rem,8vh,5rem)] md:pb-20 lg:py-0 lg:h-screen flex flex-col lg:flex-row items-center justify-center overflow-x-hidden lg:overflow-hidden">
       <div className="flex flex-col items-center lg:items-start w-full lg:w-[40vw] px-6 lg:px-0 mb-12 lg:mb-0">
         <div className="flex flex-col items-center lg:items-start" style={{ marginBottom: "70px" }}>
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl text-center lg:text-left"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 900,
-              background: "linear-gradient(to right, #ffffff, #f9ba1f)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              lineHeight: 1.15,
-              paddingBottom: "0.15em",
-              letterSpacing: "-0.03em",
-              margin: 0,
-            }}
-          >
+          <h1 className="text-4xl md:text-5xl lg:text-6xl text-center lg:text-left" style={TITLE_STYLE_1}>
             IEEE CS MUJ
           </h1>
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl text-center lg:text-left"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 900,
-              background: "linear-gradient(to right, #ffffff, #f9ba1f)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              lineHeight: 1.15,
-              paddingBottom: "0.15em",
-              letterSpacing: "-0.03em",
-              margin: 0,
-              marginTop: "10px",
-            }}
-          >
+          <h1 className="text-4xl md:text-5xl lg:text-6xl text-center lg:text-left" style={TITLE_STYLE_2}>
             Since 2019
           </h1>
-          <div
-            style={{
-              width: "40px",
-              height: "3px",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5)",
-              borderRadius: "999px",
-              marginTop: "15px",
-            }}
-          />
+          <div style={GLOW_LINE_STYLE} />
         </div>
         <TVComponent />
       </div>
@@ -359,4 +387,4 @@ export default function TeamsInfoComponent() {
       </div>
     </div>
   );
-}
+}

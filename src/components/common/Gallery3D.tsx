@@ -29,13 +29,15 @@ export interface Gallery3DProps {
 }
 
 
-const DEFAULT_IMAGES: [string, string, string, string, string] = [
+export const GALLERY_3D_DEFAULT_IMAGES: [string, string, string, string, string] = [
   'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=760&q=85',
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=760&q=85',
   'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=760&q=85',
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=760&q=85',
   'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?w=760&q=85',
 ];
+
+const DEFAULT_IMAGES = GALLERY_3D_DEFAULT_IMAGES;
 
 function easeIn(t: number): number {
   return t * t * t;

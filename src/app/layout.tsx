@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, DM_Sans, Cormorant_Garamond, Share_Tech_Mono, VT323 } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, DM_Sans, Cormorant_Garamond, Share_Tech_Mono, VT323, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/ui/Footer";
@@ -14,10 +14,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["900"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
 });
 
 const dmSans = DM_Sans({
@@ -61,6 +68,7 @@ export const metadata: Metadata = {
 
 import Preloader from "@/components/common/Preloader";
 import { LoadingProvider } from "@/context/LoadingContext";
+import ScrollProvider from "@/components/providers/ScrollProvider";
 
 export default function RootLayout({
   children,
@@ -70,17 +78,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${dmSans.variable} ${cormorant.variable} ${shareTechMono.variable} ${vt323.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${playfair.variable} ${dmSans.variable} ${cormorant.variable} ${shareTechMono.variable} ${vt323.variable} antialiased flex flex-col min-h-screen`}
         suppressHydrationWarning
       >
-        <LoadingProvider>
-          <Preloader />
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-        </LoadingProvider>
+        <ScrollProvider>
+          <LoadingProvider>
+            <Preloader />
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </LoadingProvider>
+        </ScrollProvider>
       </body>
     </html>
   );

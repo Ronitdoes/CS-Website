@@ -104,12 +104,15 @@ export default function ChairpersonSection() {
         mm.add("(min-width: 1025px)", () => {
             const panels = gsap.utils.toArray<HTMLElement>(`.${styles.section}`);
             
-            // Set all sections except the first one off-screen to the right
+            // Set all sections except the first one off-screen to the right for horizontal sliding
             gsap.set(panels.slice(1), {
                 position: "absolute",
                 top: 0,
                 left: 0,
+                width: "100%",
+                height: "100%",
                 xPercent: 100,
+                yPercent: 0,
             });
 
             // Set wrapper container for the horizontal pinning scroll behavior
@@ -128,9 +131,10 @@ export default function ChairpersonSection() {
             panels.forEach((panel, i) => {
                 if (i === 0) return;
 
-                // Slide in the current panel from the right, stacking over the previous one (no dimming or scaling)
+                // Slide in the current panel horizontally from the right
                 tl.to(panel, {
                     xPercent: 0,
+                    duration: 1,
                     ease: "none",
                 }, i - 1);
             });
@@ -154,6 +158,7 @@ export default function ChairpersonSection() {
                         ["--fade-color" as any]: leader.fadeColor,
                     }}
                 >
+                    <div className={styles.dimOverlay} />
                     {/* Three-column grid: title photo quote */}
                     <div className={styles.grid}>
                         {/* ── Left: label title */}

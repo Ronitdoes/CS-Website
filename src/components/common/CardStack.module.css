@@ -8,6 +8,7 @@
     align-items: center;
     font-family: sans-serif;
     overflow: hidden;
+    contain: layout style paint;
 }
 
 .heading {
@@ -24,6 +25,8 @@
     height: 50vmin;
     margin: 0 auto;
     overflow: visible;
+    transform-style: preserve-3d;
+    isolation: isolate;
 }
 
 .card {
@@ -39,9 +42,25 @@
     height: 50vmin;
     border-radius: 5vmin;
     overflow: hidden;
+    will-change: transform;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: rotate(var(--rotate)) translate3d(calc(var(--translateX) + var(--offsetTranslateX)), calc(var(--translateY) + var(--offsetY)), 0);
+    transform: rotate(var(--rotate)) translate3d(calc(var(--translateX) + var(--offsetTranslateX)), calc(var(--translateY) + var(--offsetY)), 0);
     transition: transform 0.7s ease;
-    transform:
-        rotate(var(--rotate)) translateX(calc(var(--translateX) + var(--offsetTranslateX))) translateY(calc(var(--translateY) + var(--offsetY)));
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.cardImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .card:nth-child(1) {
@@ -204,40 +223,42 @@
         --translateY: 0vw;
     }
 
-    .cards.open .card:hover {
-        --offsetY: -8vw;
-    }
+    @media (hover: hover) {
+        .cards.open .card:hover {
+            --offsetY: -8vw;
+        }
 
-    .cards.open .card:hover+.card {
-        --offsetTranslateX: 12vw;
-    }
+        .cards.open .card:hover+.card {
+            --offsetTranslateX: 12vw;
+        }
 
-    .cards.open .card:hover+.card+.card {
-        --offsetTranslateX: 10vw;
-    }
+        .cards.open .card:hover+.card+.card {
+            --offsetTranslateX: 10vw;
+        }
 
-    .cards.open .card:hover+.card+.card+.card {
-        --offsetTranslateX: 8vw;
-    }
+        .cards.open .card:hover+.card+.card+.card {
+            --offsetTranslateX: 8vw;
+        }
 
-    .cards.open .card:hover+.card+.card+.card+.card {
-        --offsetTranslateX: 6vw;
-    }
+        .cards.open .card:hover+.card+.card+.card+.card {
+            --offsetTranslateX: 6vw;
+        }
 
-    .cards.open .card:has(+ .card:hover) {
-        --offsetTranslateX: -12vw;
-    }
+        .cards.open .card:has(+ .card:hover) {
+            --offsetTranslateX: -12vw;
+        }
 
-    .cards.open .card:has(+ .card + .card:hover) {
-        --offsetTranslateX: -10vw;
-    }
+        .cards.open .card:has(+ .card + .card:hover) {
+            --offsetTranslateX: -10vw;
+        }
 
-    .cards.open .card:has(+ .card + .card + .card:hover) {
-        --offsetTranslateX: -8vw;
-    }
+        .cards.open .card:has(+ .card + .card + .card:hover) {
+            --offsetTranslateX: -8vw;
+        }
 
-    .cards.open .card:has(+ .card + .card + .card + .card:hover) {
-        --offsetTranslateX: -6vw;
+        .cards.open .card:has(+ .card + .card + .card + .card:hover) {
+            --offsetTranslateX: -6vw;
+        }
     }
 }
 

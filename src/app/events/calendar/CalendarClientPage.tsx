@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
-import SmoothScrollProvider from "@/components/common/SmoothScrollProvider";
 import type { EventItem } from "@/data/eventsData";
 import styles from "./calendar.module.css";
 
@@ -86,7 +85,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
   };
 
   return (
-    <SmoothScrollProvider>
+    <>
       <div>
         <section
           ref={landingRef}
@@ -295,6 +294,6 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
           </div>
         </section>
       </div>
-    </SmoothScrollProvider>
+    </>
   );
 }
