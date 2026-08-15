@@ -94,25 +94,24 @@ export default function HeroSection({ ecMembers }: { ecMembers: TeamMember[] }) 
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // ENTRANCE: content slides up
-      gsap.from(contentRef.current, {
-        y: 150,
-        opacity: 1,
-        duration: 3,
-        ease: 'power4.out',
-      })
+      // ENTRANCE: subtle slide up without touching opacity so text is 100% visible on load
+      gsap.fromTo(
+        contentRef.current,
+        { y: 50 },
+        { y: 0, duration: 1, ease: 'power3.out', overwrite: 'auto' }
+      )
 
-      gsap.from(mobileContentRef.current, {
-        y: 80,
-        opacity: 1,
-        duration: 3,
-        ease: 'power4.out',
-      })
+      gsap.fromTo(
+        mobileContentRef.current,
+        { y: 40 },
+        { y: 0, duration: 1, ease: 'power3.out', overwrite: 'auto' }
+      )
 
-      // DESKTOP scroll animation
+      // Responsive GSAP matchMedia
       const mm = gsap.matchMedia()
 
-      mm.add('(min-width: 1025px)', () => {
+      // DESKTOP scroll animation (align with Tailwind lg: min-width: 1024px)
+      mm.add('(min-width: 1024px)', () => {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: ourStoryWrapper.current,
@@ -121,45 +120,69 @@ export default function HeroSection({ ecMembers }: { ecMembers: TeamMember[] }) 
             scrub: 0.5,
             pin: true,
             anticipatePin: 1,
+            fastScrollEnd: true,
+            preventOverlaps: true,
           },
         })
 
-        // Step 1: fade & blur the text
-        tl.to(contentRef.current, {
-          opacity: 0,
-          filter: 'blur(8px)',
-          scale: 0.9,
-          duration: 2,
-          ease: 'power4.inOut',
-          immediateRender: false,
-        })
+        // Step 1: fade & blur the text completely
+        tl.to(
+          contentRef.current,
+          {
+            opacity: 0,
+            filter: 'blur(12px)',
+            scale: 0.9,
+            duration: 2,
+            ease: 'power2.inOut',
+          },
+          0
+        )
 
-        // Step 2: slide halves apart simultaneously
+        // Step 2: hide text completely once faded
+        tl.set(contentRef.current, { display: 'none' }, 2.1)
+
+        // Step 3: slide halves apart simultaneously
         tl.to(
           leftRef.current,
-          { x: '-100%', ease: 'power4.inOut', duration: 3.5 },
+          { x: '-100%', ease: 'power3.inOut', duration: 3.5 },
+          0.8
         )
-        tl.to(rightRef.current, { x: '100%', ease: 'power4.inOut', duration: 3.5 }, '<')
+        tl.to(
+          rightRef.current,
+          { x: '100%', ease: 'power3.inOut', duration: 3.5 },
+          0.8
+        )
+
+        // Step 4: hide offscreen panels so GPU compositing skips them
+        tl.set([leftRef.current, rightRef.current], { display: 'none' })
       })
 
-      // MOBILE/TABLET scroll animation
-      mm.add('(max-width: 1024px)', () => {
-        gsap.to([mobileHeroRef.current, mobileContentRef.current], {
-          y: -window.innerHeight * 1.3,
-          ease: 'power1.inOut',
+      // MOBILE/TABLET scroll animation (< 1024px)
+      mm.add('(max-width: 1023px)', () => {
+        const mobileTl = gsap.timeline({
           scrollTrigger: {
             trigger: ourStoryWrapper.current,
             start: 'top top',
-            end: '+=1450',
+            end: '+=1200',
             scrub: 0.35,
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
+            fastScrollEnd: true,
+            preventOverlaps: true,
           },
         })
+
+        mobileTl.to(mobileHeroRef.current, {
+          y: -window.innerHeight * 1.2,
+          opacity: 0,
+          ease: 'power1.inOut',
+          duration: 3,
+        })
+        mobileTl.set(mobileHeroRef.current, { display: 'none' })
       })
 
-      // Delay refresh until after the browser has painted the new page DOM
+      // Refresh triggers after page paint
       const refreshId = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           ScrollTrigger.refresh()
@@ -172,28 +195,8 @@ export default function HeroSection({ ecMembers }: { ecMembers: TeamMember[] }) 
     })
 
     return () => {
-      // Kill all animations and ScrollTriggers in this context
+      // Cleanly revert all animations and ScrollTriggers in this context
       ctx.revert()
-      
-      // Additional safety: manually unpin any pinned elements
-      const allTriggers = ScrollTrigger.getAll()
-      allTriggers.forEach((trigger) => {
-        if (trigger.vars?.pin) {
-          // Unpin by setting transform to none
-          if (trigger.pin && typeof trigger.pin === 'object') {
-            (trigger.pin as HTMLElement).style.transform = ''
-          }
-        }
-      })
-
-      // Reset any inline styles left on elements
-      ;[contentRef, leftRef, rightRef, mobileContentRef, mobileHeroRef, heroRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.style.transform = ''
-          ref.current.style.filter = ''
-          ref.current.style.opacity = ''
-        }
-      })
     }
   }, [])
 
