@@ -45,4 +45,9 @@ next-env.d.ts
 public/Hero_backup.glb
 public/logos/ieee_backup.glb
 public/Heroimg_backup/
+public/3d-backups/
+
+# agents and ide configs
+.agents/
+.agents
 
