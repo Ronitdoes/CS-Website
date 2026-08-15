@@ -6,11 +6,10 @@ import { useGLTF, Environment, Float } from "@react-three/drei";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
 import * as THREE from "three";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
 
 const sharedMaterial = new THREE.MeshStandardMaterial({
@@ -31,7 +30,7 @@ function Model({ url, scale = 0.35, position = [0, 0, 0] }: { url: string; scale
     });
   }, [scene]);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (modelRef.current) {
       // Continuous spin around its vertical axis
       modelRef.current.rotation.z += delta * 0.5;
@@ -53,20 +52,34 @@ function Model({ url, scale = 0.35, position = [0, 0, 0] }: { url: string; scale
 
 useGLTF.preload("/logos/ieee.glb");
 
+export const TOTAL_FRAMES = 36;
+
+export const HERO_SEQUENCE_IMAGES: string[] = Array.from(
+  { length: TOTAL_FRAMES },
+  (_, i) => `/Heroimg/${(i + 1).toString().padStart(4, "0")}.avif`
+);
+
 export default function HeroImageSequence({ scrollContainerRef }: { scrollContainerRef?: React.RefObject<HTMLElement | null> }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const sequenceRef = useRef<HTMLDivElement>(null);
   const modelRef = useRef<HTMLDivElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const [isHeroInView, setIsHeroInView] = useState(true);
-  
-  // Cache dimensions in a ref to avoid reading window.innerWidth/innerHeight on every scroll frame
+
+  // Cached image storage in ref to avoid triggering React re-renders on every loaded frame
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const loadedCountRef = useRef<number>(0);
+  const aspectRatioRef = useRef<number | null>(null);
+  const lastRenderedFrameRef = useRef<number>(-1);
+  const currentFrameIndexRef = useRef<number>(0);
   const dimensionsRef = useRef({ width: 0, height: 0, dpr: 1 });
 
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  // Minimal reactive state strictly for viewport and breakpoint changes
+  const [isHeroInView, setIsHeroInView] = useState(true);
+  const [isModelActive, setIsModelActive] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Viewport intersection observer to pause WebGL rendering when offscreen
+  // Viewport intersection observer to pause rendering when hero is offscreen
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -82,90 +95,192 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const isMobile = w < 768;
-      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
-      dimensionsRef.current = { width: w, height: h, dpr };
-      setWindowSize({ width: w, height: h });
+  // Helper to retrieve the target frame or closest loaded frame
+  const getAvailableFrame = (targetIndex: number): HTMLImageElement | null => {
+    const images = imagesRef.current;
+    if (images[targetIndex]) return images[targetIndex];
 
-      const canvas = canvasRef.current;
-      if (canvas) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
+    // Search for closest loaded frame to keep scrolling smooth during preload
+    for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
+      if (targetIndex - offset >= 0 && images[targetIndex - offset]) {
+        return images[targetIndex - offset];
       }
-    };
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions, { passive: true });
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
-
-  const totalFrames = 36;
-
-  useEffect(() => {
-    const loadedImages: HTMLImageElement[] = [];
-    let loadedCount = 0;
-
-    for (let i = 1; i <= totalFrames; i++) {
-        const img = new Image();
-        img.decoding = "async";
-        const frameIndex = i.toString().padStart(4, '0');
-        img.src = `/Heroimg/${frameIndex}.avif`;
-        img.onload = () => {
-            loadedCount++;
-            if (loadedCount === totalFrames) {
-                setImages(loadedImages);
-            }
-        };
-        loadedImages[i - 1] = img;
+      if (targetIndex + offset < TOTAL_FRAMES && images[targetIndex + offset]) {
+        return images[targetIndex + offset];
+      }
     }
-  }, []);
+    return null;
+  };
 
-  // Track last rendered frame to skip redundant draws
-  const lastFrameRef = useRef(-1);
+  // High-performance canvas drawing routine
+  const renderFrame = useCallback((index: number, force = false) => {
+    currentFrameIndexRef.current = index;
 
-  const renderFrame = useCallback((index: number) => {
-    // Skip if we already rendered this exact frame
-    if (index === lastFrameRef.current) return;
-    
+    if (!force && index === lastRenderedFrameRef.current) return;
+
     const canvas = canvasRef.current;
-    if (!canvas || !images[index]) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!canvas) return;
 
-    lastFrameRef.current = index;
-    const img = images[index];
-    
+    let ctx = ctxRef.current;
+    if (!ctx) {
+      ctx = canvas.getContext("2d", { alpha: true });
+      if (!ctx) return;
+      ctxRef.current = ctx;
+    }
+
+    const img = getAvailableFrame(index);
+    if (!img) return;
+
+    lastRenderedFrameRef.current = index;
+
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
     if (canvasWidth === 0 || canvasHeight === 0) return;
 
-    const imgRatio = img.width / img.height;
+    const imgRatio = aspectRatioRef.current || (img.naturalWidth ? img.naturalWidth / img.naturalHeight : img.width / img.height);
     const canvasRatio = canvasWidth / canvasHeight;
-    let drawWidth, drawHeight, offsetX, offsetY;
+
+    let drawWidth: number;
+    let drawHeight: number;
+    let offsetX: number;
+    let offsetY: number;
 
     if (canvasRatio > imgRatio) {
-        // Canvas is wider than image (relatively)
-        drawWidth = canvasWidth;
-        drawHeight = canvasWidth / imgRatio;
-        offsetX = 0;
-        offsetY = (canvasHeight - drawHeight) / 2;
+      // Canvas is wider than image (relatively)
+      drawWidth = canvasWidth;
+      drawHeight = Math.round(canvasWidth / imgRatio);
+      offsetX = 0;
+      offsetY = Math.round((canvasHeight - drawHeight) * 0.5);
     } else {
-        // Canvas is taller than image (relatively)
-        drawWidth = canvasHeight * imgRatio;
-        drawHeight = canvasHeight;
-        offsetX = (canvasWidth - drawWidth) / 2;
-        offsetY = 0;
+      // Canvas is taller than image (relatively)
+      drawWidth = Math.round(canvasHeight * imgRatio);
+      drawHeight = canvasHeight;
+      offsetX = Math.round((canvasWidth - drawWidth) * 0.5);
+      offsetY = 0;
     }
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-  }, [images]);
+  }, []);
 
+  // Priority-based progressive image preloading
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadFrame = async (index: number): Promise<HTMLImageElement | null> => {
+      const src = HERO_SEQUENCE_IMAGES[index];
+      if (!src) return null;
+
+      const img = new Image();
+      img.decoding = "async";
+      img.src = src;
+
+      try {
+        if (img.decode) {
+          await img.decode();
+        } else {
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = reject;
+          });
+        }
+        if (isCancelled) return null;
+
+        imagesRef.current[index] = img;
+        loadedCountRef.current++;
+
+        // Cache aspect ratio from the first successfully loaded image
+        if (!aspectRatioRef.current && (img.naturalWidth || img.width)) {
+          const nw = img.naturalWidth || img.width;
+          const nh = img.naturalHeight || img.height;
+          if (nw && nh) aspectRatioRef.current = nw / nh;
+        }
+
+        // Immediately paint Frame 1 (or current frame if user is already at this position)
+        if (index === 0 || currentFrameIndexRef.current === index) {
+          renderFrame(index, true);
+        }
+
+        return img;
+      } catch {
+        if (img.complete && (img.naturalWidth || img.width)) {
+          imagesRef.current[index] = img;
+          loadedCountRef.current++;
+          if (index === 0 || currentFrameIndexRef.current === index) {
+            renderFrame(index, true);
+          }
+        }
+        return null;
+      }
+    };
+
+    // Priority 1: Load and decode Frame 0 immediately for instant FCP
+    loadFrame(0).then(() => {
+      if (isCancelled) return;
+      // Priority 2: Preload remaining frames in the background
+      for (let i = 1; i < TOTAL_FRAMES; i++) {
+        loadFrame(i);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [renderFrame]);
+
+  // Debounced rAF resize handler to avoid layout thrashing and unnecessary React re-renders
+  useEffect(() => {
+    let rafId: number | null = null;
+
+    const updateCanvasSize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const mobile = w < 768;
+      const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.5);
+
+      setIsMobile(prev => (prev !== mobile ? mobile : prev));
+      dimensionsRef.current = { width: w, height: h, dpr };
+
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const targetWidth = Math.round(w * dpr);
+        const targetHeight = Math.round(h * dpr);
+
+        if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          canvas.style.width = `${w}px`;
+          canvas.style.height = `${h}px`;
+          // Reset cached 2D context
+          ctxRef.current = canvas.getContext("2d", { alpha: true });
+        }
+      }
+
+      // Redraw current frame after resize
+      const trigger = ScrollTrigger.getById("hero-sequence-trigger");
+      const currentProgress = trigger ? trigger.progress : 0;
+      const currentFrame = Math.min(
+        TOTAL_FRAMES - 1,
+        Math.floor(currentProgress * (TOTAL_FRAMES - 1))
+      );
+      renderFrame(currentFrame, true);
+    };
+
+    const handleResize = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateCanvasSize);
+    };
+
+    updateCanvasSize();
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [renderFrame]);
+
+  // GSAP ScrollTrigger timeline setup with container scope and dynamic WebGL activation
   useGSAP(() => {
     if (!scrollContainerRef?.current || !sequenceRef.current || !modelRef.current) return;
 
@@ -182,7 +297,12 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
         start: "top top",
         end: "bottom bottom",
         scrub: 0.5, // cinematic smooth catch-up
-      }
+        onUpdate: (self) => {
+          // Dynamically spin up WebGL frameloop only when approaching 3D transition (progress >= 0.88)
+          const shouldActivate = self.progress >= 0.88;
+          setIsModelActive(prev => (prev !== shouldActivate ? shouldActivate : prev));
+        },
+      },
     });
 
     // Sequence Opacity/Display
@@ -209,38 +329,18 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
 
     // Frame sequence playhead tween
     tl.to(playhead, {
-      frame: totalFrames - 1,
+      frame: TOTAL_FRAMES - 1,
       duration: 0.94,
       ease: "none",
       onUpdate: () => {
-        if (images.length === totalFrames) {
-          renderFrame(Math.floor(playhead.frame));
-        }
-      }
+        renderFrame(Math.min(TOTAL_FRAMES - 1, Math.floor(playhead.frame)));
+      },
     }, 0);
 
-    // Ensure the initial render frame is called once the timeline/scrolltrigger is built
-    if (images.length === totalFrames) {
-      renderFrame(0);
-    }
+    // Initial draw
+    renderFrame(0, true);
 
-  }, { dependencies: [scrollContainerRef, images], scope: sequenceRef });
-
-  useEffect(() => {
-    if (images.length === totalFrames && windowSize.width > 0) {
-        // Reset lastFrameRef to force a redraw after resize
-        lastFrameRef.current = -1;
-        const trigger = ScrollTrigger.getById("hero-sequence-trigger");
-        const currentProgress = trigger ? trigger.progress : 0;
-        const currentFrame = Math.min(
-            totalFrames - 1,
-            Math.floor(currentProgress * totalFrames)
-        );
-        renderFrame(currentFrame);
-    }
-  }, [images, windowSize, renderFrame]);
-
-  const isMobile = windowSize.width > 0 && windowSize.width < 768;
+  }, { dependencies: [scrollContainerRef], scope: containerRef });
 
   return (
     <div ref={containerRef} className="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent">
@@ -260,7 +360,7 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
         />
       </div>
 
-      {/* 3D Model Canvas */}
+      {/* 3D Model Canvas - Frameloop throttled dynamically when offscreen or hidden */}
       <div 
         ref={modelRef}
         className="absolute inset-0 z-20 pointer-events-none"
@@ -269,7 +369,7 @@ export default function HeroImageSequence({ scrollContainerRef }: { scrollContai
           camera={{ position: [0, 0, 5], fov: 45 }}
           gl={{ alpha: true, antialias: !isMobile, powerPreference: "high-performance" }}
           dpr={isMobile ? [1, 1.25] : [1, 1.5]}
-          frameloop={isHeroInView ? "always" : "never"}
+          frameloop={isHeroInView && isModelActive ? "always" : "never"}
           style={{ background: "transparent", pointerEvents: "none" }}
         >
           <ambientLight intensity={1} />

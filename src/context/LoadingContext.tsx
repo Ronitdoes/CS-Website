@@ -9,6 +9,7 @@ import { SCROLL_GRID_IMAGES } from "@/components/common/ScrollGrid";
 import { GALLERY_3D_DEFAULT_IMAGES } from "@/components/common/Gallery3D";
 import { PROJECT_IMAGES } from "@/components/common/ProjectCard";
 import { NAV_IMAGES } from "@/components/common/Navbar";
+import { HERO_SEQUENCE_IMAGES } from "@/components/common/HeroImageSequence";
 
 export const GALLERY_IMAGES = [
   ...HORIZONTAL_GALLERY_IMAGES,
@@ -17,6 +18,7 @@ export const GALLERY_IMAGES = [
 ];
 
 export const ALL_PRELOAD_IMAGES = [
+  ...HERO_SEQUENCE_IMAGES,
   ...EVENT_IMAGES,
   ...GALLERY_IMAGES,
   ...PROJECT_IMAGES,
@@ -45,8 +47,17 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
   // Eagerly preload and decode all critical site images in background thread during preloader
   useEffect(() => {
+    // Priority 1: Eagerly decode Frame 1 of hero sequence for instant first paint
+    const priorityImg = new window.Image();
+    priorityImg.src = "/Heroimg/0001.avif";
+    if (typeof priorityImg.decode === "function") {
+      priorityImg.decode().catch(() => {});
+    }
+
+    // Priority 2: Preload and decode the remaining assets (including frames 2-36)
     const allImages = Array.from(new Set(ALL_PRELOAD_IMAGES));
     allImages.forEach((src) => {
+      if (src === "/Heroimg/0001.avif") return;
       const img = new window.Image();
       img.src = src;
       if (typeof img.decode === "function") {
