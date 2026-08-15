@@ -11,12 +11,22 @@ export default function Preloader() {
   const lenis = useLenis();
 
   useEffect(() => {
-    // Lock scroll while preloader is visible
+    // Lock scroll while preloader is visible; unlock immediately when ready
     if (!isReady) {
       lenis?.stop();
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      lenis?.start();
     }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      lenis?.start();
+    };
   }, [isReady, lenis]);
 
   const handleVideoEnd = () => {

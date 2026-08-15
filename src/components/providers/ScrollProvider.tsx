@@ -65,11 +65,13 @@ export function ScrollProvider({ children }: { children: React.ReactNode }) {
       autoRefreshEvents: "visibilitychange,DOMContentLoaded,load,resize",
     });
 
-    // Global ScrollTrigger normalizeScroll
-    ScrollTrigger.normalizeScroll({
-      allowNestedScroll: true,
-      lockAxis: true,
-    });
+    // ScrollTrigger normalizeScroll for mobile touch devices to lock address bar & prevent jitter
+    if (ScrollTrigger.isTouch === 1) {
+      ScrollTrigger.normalizeScroll({
+        allowNestedScroll: true,
+        lockAxis: true,
+      });
+    }
 
     return () => {
       // Clean up ticker and listeners
