@@ -307,7 +307,7 @@ export default function HorizontalGallery() {
     >
       <div
         ref={scroller}
-        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[4.5rem] sm:max-md:gap-[5.5rem] max-md:py-14 max-md:px-5 sm:max-md:px-8 max-md:h-auto max-md:w-full md:will-change-transform"
+        className="gallery-scroller-canvas flex flex-col md:flex-row md:w-[200vw] w-full min-h-screen text-white relative bg-transparent max-md:flex max-md:flex-col max-md:gap-[4.5rem] sm:max-md:gap-[5.5rem] max-md:py-16 sm:max-md:py-20 max-md:px-5 sm:max-md:px-8 max-md:h-auto max-md:w-full md:will-change-transform"
       >
         {/* SECTION 1 */}
         <section className="skill-set relative w-full md:w-screen h-auto md:h-full px-6 md:px-12 pt-[clamp(2rem,5vh,4rem)] md:pt-[clamp(3.5rem,10vw,6rem)] pb-0 md:py-0 flex flex-col md:block gap-32 md:gap-20 max-md:contents">

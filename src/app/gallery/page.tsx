@@ -60,7 +60,7 @@ export default function Gallery() {
 
         <div className="relative z-10 w-full">
           {/* responsive hero height */}
-          <div className="relative w-full h-[100dvh] sm:h-[85vh] md:h-screen">
+          <div className="relative w-full h-[100dvh] sm:h-[85vh] md:h-screen overflow-hidden mb-24 sm:mb-32 md:mb-48 lg:mb-56">
             <video
               ref={videoRef}
               autoPlay

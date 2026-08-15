@@ -178,8 +178,6 @@ export default function ScrollGrid() {
         setActiveIndex((prev) => (prev === index ? null : index));
     };
 
-    const gridOpacity = useTransform(scrollYProgress, [0.92, 1], [1, 0]);
-
     return (
         <div ref={containerRef} style={{ height: '350vh', position: 'relative' }}>
             <div
@@ -231,14 +229,13 @@ export default function ScrollGrid() {
                     )}
                 </AnimatePresence>
 
-                <motion.div
+                <div
                     style={{
                         width: '100%',
                         height: '100%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        opacity: gridOpacity,
                     }}
                 >
                     <div
@@ -267,7 +264,7 @@ export default function ScrollGrid() {
                             />
                         ))}
                     </div>
-                </motion.div>
+                </div>
             </div>
             <br />
         </div>
