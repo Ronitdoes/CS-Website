@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getEventById } from "@/lib/getEvents";
@@ -6,6 +7,20 @@ import { getEventById } from "@/lib/getEvents";
 interface EventPageProps {
   params: {
     id: string;
+  };
+}
+
+export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
+  const { id } = await params as { id: string };
+  const event = await getEventById(id);
+
+  if (!event) {
+    return { title: "Event Not Found — IEEE CS MUJ" };
+  }
+
+  return {
+    title: `${event.title} — IEEE CS MUJ`,
+    description: event.description.slice(0, 160),
   };
 }
 

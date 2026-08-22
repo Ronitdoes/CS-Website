@@ -11,7 +11,7 @@ export default function TiltedPhotoGrid() {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden h-full w-full pointer-events-none">
 
       <div
-        className="absolute origin-center transition-transform duration-[2000ms] ease-out will-change-transform"
+        className="absolute origin-center"
         style={{
           transform: "rotate(-30deg) scale(1.3)",
           width: "200vw",
@@ -24,26 +24,32 @@ export default function TiltedPhotoGrid() {
             gridTemplateColumns: "repeat(10, minmax(150px, 15vw))",
           }}
         >
-          {gridItems.map((src, index) => (
-            <div
-              key={index}
-              className="relative w-[15vw] h-[22vw] min-w-[150px] min-h-[220px] rounded-[1vw] overflow-hidden bg-zinc-800 flex-shrink-0"
-            >
-              <Image
-                src={src}
-                alt={`Grid image ${index + 1}`}
-                fill
-                style={{ objectFit: "cover" }}
-                className={
-                  index === Math.floor(gridItems.length / 2)
-                    ? ""
-                    : "grayscale"
-                }
-                sizes="(max-width: 768px) 30vw, 15vw"
-                quality={75}
-              />
-            </div>
-          ))}
+          {gridItems.map((src, index) => {
+            const isOffscreenRow = index < 10 || index >= 60;
+
+            return (
+              <div
+                key={index}
+                className="relative w-[15vw] h-[22vw] min-w-[150px] min-h-[220px] rounded-[1vw] overflow-hidden bg-zinc-800 flex-shrink-0"
+              >
+                <Image
+                  src={src}
+                  alt={`Grid image ${index + 1}`}
+                  fill
+                  style={{ objectFit: "cover" }}
+                  className={
+                    index === Math.floor(gridItems.length / 2)
+                      ? ""
+                      : "grayscale"
+                  }
+                  sizes="(max-width: 768px) 30vw, 15vw"
+                  quality={75}
+                  loading={isOffscreenRow ? "lazy" : "eager"}
+                  decoding="async"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -9,24 +9,7 @@ import {
     AnimatePresence,
 } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
-
-export const SCROLL_GRID_IMAGES = [
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560890144_eiggr.jpeg',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562282146_spph3r.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562529818_eoed.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782659857657_tzsw4o.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562551042_2702i.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562562411_f2i9c.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782562302512_z4c2gm.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782564214909_0h7cc2.webp',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782563020146_ic2d8u.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782564444689_w96wiw.webp',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782626827226_96d99l.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782628087084_7yu295.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782626676553_vp5eo.webp',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782659869512_du1u.avif',
-    'https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782626687798_61ilal.webp',
-];
+import { SCROLL_GRID_IMAGES } from '@/data/preloadManifest';
 
 const IMAGES = SCROLL_GRID_IMAGES;
 

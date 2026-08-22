@@ -1,34 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { useProgress, useGLTF, useEnvironment } from "@react-three/drei";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { EVENT_IMAGES } from "@/components/common/CardStack";
-import { HORIZONTAL_GALLERY_IMAGES } from "@/app/gallery/HorizontalGallery";
-import { SCROLL_GRID_IMAGES } from "@/components/common/ScrollGrid";
-import { GALLERY_3D_DEFAULT_IMAGES } from "@/components/common/Gallery3D";
-import { PROJECT_IMAGES } from "@/components/common/ProjectCard";
-import { NAV_IMAGES } from "@/components/common/Navbar";
-import { HERO_SEQUENCE_IMAGES } from "@/components/common/HeroImageSequence";
-
-export const GALLERY_IMAGES = [
-  ...HORIZONTAL_GALLERY_IMAGES,
-  ...SCROLL_GRID_IMAGES,
-  ...GALLERY_3D_DEFAULT_IMAGES,
-];
-
-export const ALL_PRELOAD_IMAGES = [
-  ...HERO_SEQUENCE_IMAGES,
-  ...EVENT_IMAGES,
-  ...GALLERY_IMAGES,
-  ...PROJECT_IMAGES,
-  ...NAV_IMAGES,
-];
-
-// Eagerly preload critical 3D assets at application startup.
-// These are tracked by R3F's useProgress() and block the preloader until loaded.
-useGLTF.preload("/logos/ieee.glb", true);
-useEnvironment.preload({ files: "/potsdamer_platz_1k.hdr" });
+import { getPreloadPlan } from "@/data/preloadManifest";
 
 interface LoadingContextType {
   isAssetsLoaded: boolean;
@@ -42,29 +16,7 @@ const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [lastPathname, setLastPathname] = useState(pathname);
   const isFirstRender = useRef(true);
-
-  // Eagerly preload and decode all critical site images in background thread during preloader
-  useEffect(() => {
-    // Priority 1: Eagerly decode Frame 1 of hero sequence for instant first paint
-    const priorityImg = new window.Image();
-    priorityImg.src = "/Heroimg/0001.avif";
-    if (typeof priorityImg.decode === "function") {
-      priorityImg.decode().catch(() => {});
-    }
-
-    // Priority 2: Preload and decode the remaining assets (including frames 2-36)
-    const allImages = Array.from(new Set(ALL_PRELOAD_IMAGES));
-    allImages.forEach((src) => {
-      if (src === "/Heroimg/0001.avif") return;
-      const img = new window.Image();
-      img.src = src;
-      if (typeof img.decode === "function") {
-        img.decode().catch(() => {});
-      }
-    });
-  }, []);
 
   const [isVideoFinished, setVideoFinished] = useState(() => {
     if (typeof window !== "undefined") {
@@ -72,34 +24,84 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     }
     return false;
   });
-  const { progress, active } = useProgress();
   const [isAssetsLoaded, setAssetsLoaded] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const hasEverLoaded = useRef(false);
 
+  // Preload only the assets the current route actually renders, decoding them
+  // off the critical path while the preloader is visible.
   useEffect(() => {
-    if (hasEverLoaded.current) {
-      // Already loaded once – ignore any future useProgress fluctuations
-      return;
-    }
+    if (hasEverLoaded.current) return;
 
-    if (progress === 100 || !active) {
-      const timer = setTimeout(() => {
-        hasEverLoaded.current = true;
-        setAssetsLoaded(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
+    const plan = getPreloadPlan(pathname);
+    const total = plan.images.length + plan.assets.length;
 
-    // Safety timeout: ensure page becomes interactive even on slow/blocked network
+    let finished = false;
+    let done = 0;
+    let graceTimer: ReturnType<typeof setTimeout> | undefined;
+
+    // Safety timeout: ensure the page becomes interactive even on slow/blocked networks
     const fallbackTimer = setTimeout(() => {
+      if (finished || hasEverLoaded.current) return;
+      finished = true;
+      clearTimeout(graceTimer);
       hasEverLoaded.current = true;
       setAssetsLoaded(true);
     }, 2500);
 
-    return () => clearTimeout(fallbackTimer);
-  }, [progress, active]);
-  
+    const settle = () => {
+      if (finished || hasEverLoaded.current) return;
+      finished = true;
+      clearTimeout(fallbackTimer);
+      clearTimeout(graceTimer);
+      graceTimer = setTimeout(() => {
+        hasEverLoaded.current = true;
+        setAssetsLoaded(true);
+      }, 300);
+    };
+
+    const bump = () => {
+      done += 1;
+      if (total > 0) setProgress(Math.min(100, Math.round((done / total) * 100)));
+      if (done >= total) settle();
+    };
+
+    // Priority 1: eagerly decode Frame 1 of the hero sequence for instant first paint
+    if (pathname === "/") {
+      const priorityImg = new window.Image();
+      priorityImg.src = "/Heroimg/0001.avif";
+      if (typeof priorityImg.decode === "function") {
+        priorityImg.decode().catch(() => {});
+      }
+    }
+
+    plan.images.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+      if (typeof img.decode === "function") {
+        img.decode().then(bump, bump);
+      } else {
+        img.onload = bump;
+        img.onerror = bump;
+      }
+    });
+
+    // 3D assets are fetched (not parsed) here so the preloader can gate on
+    // their arrival; parsing happens inside the home page's R3F canvas.
+    plan.assets.forEach((src) => {
+      fetch(src).then(bump, bump);
+    });
+
+    if (total === 0) settle();
+
+    return () => {
+      clearTimeout(fallbackTimer);
+      clearTimeout(graceTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -110,6 +112,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     }, 0);
     return () => clearTimeout(timer);
   }, [pathname]);
+
   useEffect(() => {
     const handleLinkClick = (e: MouseEvent) => {
       if (

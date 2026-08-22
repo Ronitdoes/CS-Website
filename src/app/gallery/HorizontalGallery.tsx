@@ -12,17 +12,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-export const HORIZONTAL_GALLERY_IMAGES = [
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560566447_akr6jp.avif",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560022208_0qc8i9.avif",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782561501835_is8g49.avif",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782565661341_zbz8t.webp",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560271203_88tlqb.avif",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571214276_nw4rqm.webp",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782560416402_819ju.jpeg",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782559824603_l6h16c.avif",
-  "https://pub-2b91df05320148438318902a8dc7795b.r2.dev/media/1782571207688_kxib06.webp",
-];
+import { HORIZONTAL_GALLERY_IMAGES } from '@/data/preloadManifest';
 
 interface GalleryCardData {
   id: number;

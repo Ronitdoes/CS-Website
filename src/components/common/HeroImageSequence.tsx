@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import * as THREE from "three";
+import { TOTAL_FRAMES, HERO_SEQUENCE_IMAGES } from "@/data/preloadManifest";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -51,13 +52,6 @@ function Model({ url, scale = 0.35, position = [0, 0, 0] }: { url: string; scale
 }
 
 useGLTF.preload("/logos/ieee.glb");
-
-export const TOTAL_FRAMES = 36;
-
-export const HERO_SEQUENCE_IMAGES: string[] = Array.from(
-  { length: TOTAL_FRAMES },
-  (_, i) => `/Heroimg/${(i + 1).toString().padStart(4, "0")}.avif`
-);
 
 export default function HeroImageSequence({ scrollContainerRef }: { scrollContainerRef?: React.RefObject<HTMLElement | null> }) {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -3,7 +3,16 @@ import sql from './db';
 import type { EventItem } from '@/data/eventsData';
 import { eventsData } from '@/data/eventsData';
 
-function toEvent(r: Record<string, any>): EventItem {
+interface EventRow {
+  id: number | string;
+  title: string | null;
+  description: string | null;
+  cover_image: string | null;
+  event_date: string | Date;
+  tag: string | null;
+}
+
+function toEvent(r: EventRow): EventItem {
   const eventDate = new Date(r.event_date);
   const now = new Date();
 
@@ -40,7 +49,7 @@ export const getEvents = unstable_cache(
         FROM events
         WHERE status = 'published'
         ORDER BY display_order ASC, event_date DESC
-      ` as unknown as Record<string, any>[];
+      ` as unknown as EventRow[];
 
       return rows.map(toEvent);
     } catch (error) {
@@ -59,15 +68,24 @@ export async function getEventById(id: string): Promise<EventItem | null> {
   }
 
   try {
-    const rows = await sql`
-      SELECT id, title, description, cover_image, event_date, tag, status
-      FROM events
-      WHERE id = ${id}
-      LIMIT 1
-    ` as unknown as Record<string, any>[];
+    const fetchRow = unstable_cache(
+      async (): Promise<EventRow | null> => {
+        const rows = await sql`
+          SELECT id, title, description, cover_image, event_date, tag, status
+          FROM events
+          WHERE id = ${id}
+          LIMIT 1
+        ` as unknown as EventRow[];
 
-    if (rows.length === 0) return null;
-    return toEvent(rows[0]);
+        return rows.length === 0 ? null : rows[0];
+      },
+      ['event', id],
+      { revalidate: 3600, tags: ['events'] }
+    );
+
+    const row = await fetchRow();
+    if (!row) return null;
+    return toEvent(row);
   } catch (error) {
     console.error(`Error fetching event by id ${id} from database, falling back to local data:`, error);
     return eventsData.find(e => e.id === id) || null;

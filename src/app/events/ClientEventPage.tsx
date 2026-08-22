@@ -6,8 +6,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
 import type { EventItem } from "@/data/eventsData";
+import TiltedPhotoGrid from "@/components/common/TiltedPhotoGrid";
 
-const TiltedPhotoGrid = dynamic(() => import("@/components/common/TiltedPhotoGrid"), { ssr: false });
 const Eventcard = dynamic(() => import("@/components/common/Eventcard"), { ssr: false });
 
 gsap.registerPlugin(ScrollTrigger);

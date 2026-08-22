@@ -152,10 +152,15 @@
 }
 
 @media (max-width: 1024px) {
+    .section {
+        height: auto;
+        min-height: 100vh;
+    }
+
     .grid {
         grid-template-columns: 1fr;
         min-height: auto;
-        padding: 4rem 0;
+        padding: 3rem 0 5rem;
         gap: 3rem;
     }
 

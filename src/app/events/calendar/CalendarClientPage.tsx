@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
@@ -18,7 +18,6 @@ interface CalendarClientPageProps {
 export default function CalendarClientPage({ events }: CalendarClientPageProps) {
   const landingRef = useRef<HTMLDivElement | null>(null);
   const section2Ref = useRef<HTMLDivElement | null>(null);
-  const logoRef = useRef<HTMLImageElement | null>(null);
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -60,29 +59,34 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
   }, []);
 
   useEffect(() => {
-    if (!landingRef.current || !section2Ref.current || !logoRef.current) return;
+    if (!landingRef.current || !section2Ref.current) return;
 
-    gsap.to(landingRef.current, {
-      opacity: 0,
-      ease: "none",
-      scrollTrigger: {
-        trigger: section2Ref.current,
-        start: "top 70%",
-        end: "top top",
-        scrub: true,
-      },
-    });
+    const ctx = gsap.context(() => {
+      gsap.to(landingRef.current, {
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section2Ref.current,
+          start: "top 70%",
+          end: "top top",
+          scrub: true,
+        },
+      });
+    }, landingRef);
+
+    return () => ctx.revert();
   }, []);
 
-  const eventsForMonth = (monthIndex: number) => {
-    return events.filter((e) => {
+  const eventsByMonth = useMemo(() => {
+    const buckets: EventItem[][] = Array.from({ length: 12 }, () => []);
+    events.forEach((e) => {
       const d = new Date(e.date);
-      if (isNaN(d.getTime())) return false;
-      const m = d.getMonth();
-      const y = d.getFullYear();
-      return m === monthIndex && y === selectedYear;
+      if (isNaN(d.getTime())) return;
+      if (d.getFullYear() !== selectedYear) return;
+      buckets[d.getMonth()].push(e);
     });
-  };
+    return buckets;
+  }, [events, selectedYear]);
 
   return (
     <>
@@ -98,7 +102,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
               [paint-order:stroke_fill]
               drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]
               drop-shadow-[0_0_16px_rgba(250,204,21,0.5)]"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif" }}
             >
               What&apos;s On
             </p>
@@ -108,7 +112,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
               [paint-order:stroke_fill]
               drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]
               drop-shadow-[0_0_16px_rgba(250,204,21,0.5)]"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif" }}
             >
               Events
             </h1>
@@ -117,7 +121,6 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
           <div className="relative lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 flex items-center justify-center my-4 lg:my-0">
             <div className={`${styles.responsiveLogoWrapper} relative flex items-center justify-center`}>
               <Image
-                ref={logoRef}
                 src="/logos/calendar-logo-center.avif"
                 alt="cal-logo"
                 fill
@@ -139,7 +142,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
               [paint-order:stroke_fill]
               drop-shadow-[0_0_8px_rgba(250,204,21,0.7)]
               drop-shadow-[0_0_16px_rgba(250,204,21,0.5)]"
-              style={{ fontFamily: "'Playfair Display', serif" }}
+              style={{ fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif" }}
             >
               Calendar
             </h1>
@@ -156,7 +159,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
           <h2
             style={{
               textAlign: "center",
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
               fontWeight: 900,
               background: "linear-gradient(to right, #ffffff, #f9ba1f)",
               WebkitBackgroundClip: "text",
@@ -257,7 +260,7 @@ export default function CalendarClientPage({ events }: CalendarClientPageProps) 
             <div className={styles.calendarGrid}>
               {MONTH_NAMES.map((name: string, idx: number) => {
                 const isCurrentMonth = idx === currentMonth;
-                const monthEvents = eventsForMonth(idx);
+                const monthEvents = eventsByMonth[idx];
 
                 return (
                   <div className={styles.dayRow} key={idx}>

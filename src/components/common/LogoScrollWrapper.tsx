@@ -116,7 +116,6 @@ export default function LogoScrollWrapper() {
       const endY = vh * 0.45 - logoH * 0.5;
 
       gsap.set(el, { x: startX, y: startY, scale: 1, opacity: 1, visibility: "visible" });
-      progressRef.current.value = 0;
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -126,12 +125,6 @@ export default function LogoScrollWrapper() {
           scrub: 0.5,
         },
       });
-
-      tl.to(progressRef.current, {
-        value: 1,
-        ease: "none",
-        duration: 1,
-      }, 0);
 
       tl.to("#about-hero-title", {
         opacity: 0,

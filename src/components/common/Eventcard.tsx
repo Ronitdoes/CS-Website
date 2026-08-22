@@ -20,6 +20,8 @@ function EventCard({ exhibition }: EventCardProps) {
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover"
+          loading="lazy"
+          decoding="async"
         />
         {/* Tag */}
         <span 
@@ -177,7 +179,7 @@ export default function PastExhibitions({ events }: PastExhibitionsProps) {
             ref={titleRef}
             className="relative leading-tight tracking-tight text-center w-full eventsTitle"
             style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "var(--font-playfair), 'Playfair Display', Georgia, serif",
               fontWeight: 900,
               fontSize: "clamp(2.75rem, 8vw, 6.5rem)",
               lineHeight: 1.15,
